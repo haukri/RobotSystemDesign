@@ -111,6 +111,12 @@ bool PackmlStateMachine<T>::setSuspending(std::function<int()> state_method)
 }
 
 template <typename T>
+bool PackmlStateMachine<T>::setSuspended(std::function<int()> state_method)
+{
+  this->setStateMethod(StatesEnum::SUSPENDED, state_method);
+}
+
+template <typename T>
 bool PackmlStateMachine<T>::setUnsuspending(std::function<int()> state_method)
 {
   this->setStateMethod(StatesEnum::UNSUSPENDING, state_method);

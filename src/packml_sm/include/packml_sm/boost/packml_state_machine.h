@@ -49,6 +49,7 @@ public:
   virtual bool setStopping(std::function<int()> state_method) override;
   virtual bool setResetting(std::function<int()> state_method) override;
   virtual bool setSuspending(std::function<int()> state_method) override;
+  virtual bool setSuspended(std::function<int()> state_method) override;
   virtual bool setUnsuspending(std::function<int()> state_method) override;
   virtual bool setHolding(std::function<int()> state_method) override;
   virtual bool setUnholding(std::function<int()> state_method) override;

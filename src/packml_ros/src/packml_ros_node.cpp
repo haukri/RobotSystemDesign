@@ -36,12 +36,20 @@ int myStartingMethod()
   return 0;  // returning zero indicates non-failure
 }
 
+int mySuspendedMethod() {
+  ROS_INFO_STREAM("This is my suspended method(begin)");
+  ros::Duration(1.0).sleep();
+  ROS_INFO_STREAM("This is my suspended method(end)");
+  return 0;  // returning zero indicates non-failure
+}
+
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "packml_node");
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
+  sm->setSuspended(std::bind(mySuspendedMethod));
   packml_ros::PackmlRos sm_node(ros::NodeHandle(), ros::NodeHandle("~"), sm);
   sm_node.spin();
 

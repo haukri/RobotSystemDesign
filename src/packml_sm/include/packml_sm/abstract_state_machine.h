@@ -131,6 +131,14 @@ public:
   virtual bool setSuspending(std::function<int()> state_method) = 0;
 
   /**
+   * @brief Override to handle setting the suspending state method.
+   *
+   * @param state_method The state method to execute when entering the suspending state.
+   * @return bool Returns true on success.
+   */
+  virtual bool setSuspended(std::function<int()> state_method) = 0;
+
+  /**
    * @brief Override to handle setting the un-suspending state method.
    *
    * @param state_method The state method to execute when entering the unsuspending state.
