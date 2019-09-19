@@ -24,6 +24,7 @@
 
 // Require rosnodejs itself
 const rosnodejs = require('rosnodejs');
+const request = require('request');
 // Requires the std_msgs message package
 const std_msgs = rosnodejs.require('std_msgs').msg;
 
@@ -47,6 +48,22 @@ function talker() {
       }, 10000);*/
 
       const service = rosNode.advertiseService('/new_order', 'order_msgs/NewOrder', (req, res) => {
+
+        const options = {
+          url: 'https://www.reddit.com/r/funny.json',
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Accept-Charset': 'utf-8',
+            'User-Agent': 'my-reddit-client'
+          }
+        };
+        
+        request(options, function(err, res, body) {
+          let json = JSON.parse(body);
+          console.log(json);
+        });
+
         res.order_number = Math.round(Math.random()*1000);
         return true;
       });

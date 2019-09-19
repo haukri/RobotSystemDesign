@@ -8,6 +8,7 @@
   "author": "Haukur Kristinsson",
   "license": "Apache-2.0",
   "dependencies": {
-    "rosnodejs": "3.0.0"
+    "rosnodejs": "3.0.0",
+    "request": "2.88.0"
   }
 }
