@@ -6,6 +6,7 @@ add_service_files(
   DIRECTORY srv
   FILES
     NewOrder.srv
+    CompleteOrder.srv
 )
 
 

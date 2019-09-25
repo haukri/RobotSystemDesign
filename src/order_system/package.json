@@ -9,6 +9,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "rosnodejs": "3.0.0",
-    "request": "2.88.0"
+    "request": "2.88.0",
+    "node-persist": "3.0.5"
   }
 }
