@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Lego Picker</title>
+
+    <link rel="stylesheet" href="main.css" />
+    <link rel="stylesheet" type="text/css" href="semantic.min.css">
+    <link rel="icon" href="images/favicon.png" />
+</head>
+
+<body>
+    <div class="app-wrapper">
+        <div class="ui three item menu">
+            <a class="item active">Home</a>
+            <a class="item">PackML State Diagram</a>
+            <a class="item">Settings</a>
+        </div>
+        <div class="ui stackable three column grid">
+            <div class="column">
+                <h1>PackML State</h1>
+                <h3 id="state"></h3>
+            </div>
+            <div class="column">
+                <h1>Availability</h1>
+                <h3 id="availability"></h3>
+            </div>
+            <div class="column">
+                <h1></h1>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"
+        integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="semantic.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/script.js"></script>
+</body>
+
+</html>
