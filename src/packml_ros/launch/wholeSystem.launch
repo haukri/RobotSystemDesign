@@ -1,0 +1,6 @@
+<launch>
+  <!--<node name="packml_node" pkg="packml_ros" type="packml_ros_node" />-->
+  <node name="ur_robot" pkg="ur_robot" type="main" />
+  <node name="order_system" pkg="order_system" type="orderSystem.js" />
+  <node name="user_interface" pkg="user_interface" type="server.js" />
+</launch>

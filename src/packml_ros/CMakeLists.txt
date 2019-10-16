@@ -5,6 +5,8 @@ find_package(catkin REQUIRED COMPONENTS
   packml_msgs
   packml_sm
   roscpp
+  robot_msgs
+  order_msgs
 )
 
 set(packml_ros_SRCS
