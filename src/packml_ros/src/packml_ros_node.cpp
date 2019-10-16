@@ -26,7 +26,7 @@
 ros::ServiceClient robot_client;
 ros::ServiceClient new_order_client;
 ros::ServiceClient complete_order_client;
-int binNumber = 0;
+int binNumber = 1;
 
 int myExecuteMethod()
 {
@@ -37,10 +37,12 @@ int myExecuteMethod()
   if (new_order_client.call(new_order_srv))
   {
     ROS_INFO("Got new order");
+    ROS_INFO("Packing in bin number %d", binNumber);
     // Pick blue bricks
     for(int i=0; i < new_order_srv.response.blue_amount; i++) {
       robot_msgs::RobotCommand srv;
       srv.request.command = "pick-blue";
+      srv.request.binNumber = binNumber;
       ROS_INFO("Packing blue brick number %d", i+1);
       if (robot_client.call(srv))
       {
@@ -51,6 +53,7 @@ int myExecuteMethod()
     for(int i=0; i < new_order_srv.response.red_amount; i++) {
       robot_msgs::RobotCommand srv;
       srv.request.command = "pick-red";
+      srv.request.binNumber = binNumber;
       ROS_INFO("Packing red brick number %d", i+1);
       if (robot_client.call(srv))
       {
@@ -61,12 +64,16 @@ int myExecuteMethod()
     for(int i=0; i < new_order_srv.response.yellow_amount; i++) {
       robot_msgs::RobotCommand srv;
       srv.request.command = "pick-yellow";
+      srv.request.binNumber = binNumber;
       ROS_INFO("Packing yellow brick number %d", i+1);
       if (robot_client.call(srv))
       {
         ROS_INFO("Done");
       }
     }
+    binNumber = binNumber < 4 ? binNumber+1 : 1;
+    // Call MIR Robot
+
     // Complete the order
     order_msgs::CompleteOrder complete_order_srv;
     complete_order_srv.request.order_number = new_order_srv.response.order_number;
@@ -82,7 +89,7 @@ int myExecuteMethod()
 int myStartingMethod()
 {
   ROS_INFO_STREAM("Starting");
-  binNumber = 0;
+  binNumber = 1;
   return 0;  // returning zero indicates non-failure
 }
 

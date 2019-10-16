@@ -1,3 +1,4 @@
 string command
+int8 binNumber
 ---
 bool success
