@@ -28,6 +28,7 @@ include_directories(
 add_executable(vision_ros src/vision_ros)
 add_executable(seg_ros src/seg_ros)
 add_executable(image_pub src/image_pub)
+add_executable(cam_test src/cam_test)
 
 target_link_libraries(vision_ros
   ${catkin_LIBRARIES}
@@ -38,6 +39,10 @@ target_link_libraries(seg_ros
   ${OpenCV_LIBRARIES}
 )
 target_link_libraries(image_pub
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+target_link_libraries(cam_test
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
