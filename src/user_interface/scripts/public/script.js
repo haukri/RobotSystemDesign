@@ -24,4 +24,10 @@ $(document).ready(function() {
         document.getElementById( "availability").innerHTML = msg.stats.availability
     });*/
 
+
 });
+
+function packmlCommand(command) {
+    console.log(command);
+    socket.emit('packml_command',{command:command})
+}
