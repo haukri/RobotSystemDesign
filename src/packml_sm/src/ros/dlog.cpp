@@ -19,7 +19,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "packml_sm/dlog.h"
-#include "packml_sm/boost/packml_state_machine_continuous.h"
 #include "ros/console.h"
 
 namespace packml_sm
