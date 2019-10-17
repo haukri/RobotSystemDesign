@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
   ros::ServiceServer service = n.advertiseService("robot_command", robot_command);
 
-  rtde_control = new RTDEControlInterface("192.168.56.102");
+  rtde_control = new RTDEControlInterface("192.168.1.10");
 
   ros::spin();
 
