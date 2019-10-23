@@ -12,10 +12,11 @@ using namespace ur_rtde;
 
 RTDEReceiveInterface* rtde_receive;
 RTDEControlInterface* rtde_control;
+DashboardClient* dashboard_client;
 
 // Data to be sent
-double velocity = 0.5;
-double acceleration = 0.5;
+double velocity = 0.8;
+double acceleration = 0.8;
 
 std::vector<double> jointq_pick_red = {-2.12977, -2.51952, -1.13055, -1.05978, 1.59171, -0.0610016 };
 std::vector<double> jointq_pick_blue = {-2.14427, -2.25556, -1.62865, -0.848832, 1.59175, -0.0610016 };
@@ -76,6 +77,15 @@ bool robot_command(robot_msgs::RobotCommand::Request  &req, robot_msgs::RobotCom
   return true;
 }
 
+void stopCallback(const std_msgs::String::ConstPtr& msg)
+{
+  if(msg->data == "stop") {
+    ROS_INFO("Stopping Robot");
+    dashboard_client->stop();
+    rtde_control = new RTDEControlInterface("192.168.1.10");
+  }
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ur_robot");
@@ -84,9 +94,15 @@ int main(int argc, char **argv)
 
   ros::ServiceServer service = n.advertiseService("robot_command", robot_command);
 
-  rtde_control = new RTDEControlInterface("192.168.1.10");
+  ros::Subscriber sub = n.subscribe("stop_robot", 10, stopCallback);
 
-  ros::spin();
+  rtde_control = new RTDEControlInterface("192.168.1.10");
+  dashboard_client = new DashboardClient("192.168.1.10");
+  dashboard_client->connect();
+
+  ros::MultiThreadedSpinner s(2);
+
+  ros::spin(s);
 
   rtde_control->stopRobot();
 
