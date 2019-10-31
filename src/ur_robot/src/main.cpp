@@ -3,9 +3,11 @@
 #include "robot_msgs/RobotCommand.h"
 #include "robot_msgs/RobotCmd.h"
 #include "robot_msgs/RobotStatus.h"
+#include "robot_msgs/RobotIO.h"
 
 #include <ur_rtde/rtde_receive_interface.h>
 #include <ur_rtde/rtde_control_interface.h>
+#include <ur_rtde/rtde_io_interface.h>
 #include <iostream>
 #include <chrono>
 #include <numeric>
@@ -15,6 +17,7 @@ using namespace ur_rtde;
 RTDEReceiveInterface* rtde_receive;
 RTDEControlInterface* rtde_control;
 DashboardClient* dashboard_client;
+RTDEIOInterface* io_interface; 
 ros::Publisher robot_status_pub;
 
 // Data to be sent
@@ -125,6 +128,12 @@ void stopCallback(const std_msgs::String::ConstPtr& msg)
   }
 }
 
+void ioCallback(const robot_msgs::RobotIO::ConstPtr& msg)
+{
+  ROS_INFO("Got io command");
+  io_interface->setStandardDigitalOut(msg->output, msg->level);
+}
+
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "ur_robot");
@@ -137,9 +146,13 @@ int main(int argc, char **argv)
   ros::Subscriber subRobotCmd = n.subscribe("robot_command_new", 10, robotCommandCallback);
   robot_status_pub = n.advertise<robot_msgs::RobotStatus>("robot_command_status", 100);
 
-  rtde_control = new RTDEControlInterface("192.168.56.102");
-  dashboard_client = new DashboardClient("192.168.56.102");
+  ros::Subscriber io_sub = n.subscribe("robot_io", 10, ioCallback);
+
+  rtde_control = new RTDEControlInterface("192.168.1.10");
+  dashboard_client = new DashboardClient("192.168.1.10");
   dashboard_client->connect();
+
+  io_interface = new RTDEIOInterface("192.168.1.10");
 
   ros::MultiThreadedSpinner s(2);
 

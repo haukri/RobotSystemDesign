@@ -13,6 +13,7 @@ add_message_files(
   FILES
     RobotCmd.msg
     RobotStatus.msg
+    RobotIO.msg
 )
 
 
