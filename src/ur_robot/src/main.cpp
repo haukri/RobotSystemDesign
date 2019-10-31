@@ -1,6 +1,8 @@
 #include "ros/ros.h"
 #include "std_msgs/String.h"
 #include "robot_msgs/RobotCommand.h"
+#include "robot_msgs/RobotCmd.h"
+#include "robot_msgs/RobotStatus.h"
 
 #include <ur_rtde/rtde_receive_interface.h>
 #include <ur_rtde/rtde_control_interface.h>
@@ -13,6 +15,7 @@ using namespace ur_rtde;
 RTDEReceiveInterface* rtde_receive;
 RTDEControlInterface* rtde_control;
 DashboardClient* dashboard_client;
+ros::Publisher robot_status_pub;
 
 // Data to be sent
 double velocity = 0.8;
@@ -42,6 +45,42 @@ std::vector<double> getBinJointQ(int binNumber) {
       return jointq_bin4;
     default:
       return jointq_bin1;
+  }
+}
+
+void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
+  if(cmd->command == "pick-blue") {
+    ROS_INFO("Picking blue brick");
+
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_blue, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(getBinJointQ(cmd->binNumber), velocity, acceleration);
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "pick-red") {
+    ROS_INFO("Picking red brick");
+
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_red, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(getBinJointQ(cmd->binNumber), velocity, acceleration);
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "pick-yellow") {
+    ROS_INFO("Picking yellow brick");
+
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_yellow, velocity, acceleration);
+    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
+    rtde_control->moveJ(getBinJointQ(cmd->binNumber), velocity, acceleration);
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
   }
 }
 
@@ -82,7 +121,7 @@ void stopCallback(const std_msgs::String::ConstPtr& msg)
   if(msg->data == "stop") {
     ROS_INFO("Stopping Robot");
     dashboard_client->stop();
-    rtde_control = new RTDEControlInterface("192.168.1.10");
+    rtde_control = new RTDEControlInterface("192.168.56.102");
   }
 }
 
@@ -95,9 +134,11 @@ int main(int argc, char **argv)
   ros::ServiceServer service = n.advertiseService("robot_command", robot_command);
 
   ros::Subscriber sub = n.subscribe("stop_robot", 10, stopCallback);
+  ros::Subscriber subRobotCmd = n.subscribe("robot_command_new", 10, robotCommandCallback);
+  robot_status_pub = n.advertise<robot_msgs::RobotStatus>("robot_command_status", 100);
 
-  rtde_control = new RTDEControlInterface("192.168.1.10");
-  dashboard_client = new DashboardClient("192.168.1.10");
+  rtde_control = new RTDEControlInterface("192.168.56.102");
+  dashboard_client = new DashboardClient("192.168.56.102");
   dashboard_client->connect();
 
   ros::MultiThreadedSpinner s(2);

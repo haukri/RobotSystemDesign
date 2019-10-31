@@ -18,6 +18,7 @@
 
 #include <ros/ros.h>
 #include "robot_msgs/RobotCommand.h"
+#include "robot_msgs/RobotCmd.h"
 #include "order_msgs/NewOrder.h"
 #include "order_msgs/CompleteOrder.h"
 #include <packml_ros/packml_ros.h>
@@ -26,6 +27,7 @@
 ros::ServiceClient robot_client;
 ros::ServiceClient new_order_client;
 ros::ServiceClient complete_order_client;
+ros::Publisher robot_command_pub;
 int binNumber = 1;
 
 int myExecuteMethod()
@@ -40,14 +42,18 @@ int myExecuteMethod()
     ROS_INFO("Packing in bin number %d", binNumber);
     // Pick blue bricks
     for(int i=0; i < new_order_srv.response.blue_amount; i++) {
-      robot_msgs::RobotCommand srv;
+      robot_msgs::RobotCmd msg;
+      msg.command = "pick-blue";
+      msg.binNumber = binNumber;
+      robot_command_pub.publish(msg);
+      /*robot_msgs::RobotCommand srv;
       srv.request.command = "pick-blue";
       srv.request.binNumber = binNumber;
       ROS_INFO("Packing blue brick number %d", i+1);
       if (robot_client.call(srv))
       {
         ROS_INFO("Done");
-      }
+      }*/
     }
     // Pick red bricks
     for(int i=0; i < new_order_srv.response.red_amount; i++) {
@@ -86,6 +92,10 @@ int myExecuteMethod()
   return 0;  // returning zero indicates non-failure
 }
 
+int getNextBrick() {
+  
+}
+
 int myStartingMethod()
 {
   ROS_INFO_STREAM("Starting");
@@ -108,6 +118,7 @@ int main(int argc, char* argv[])
   robot_client = n.serviceClient<robot_msgs::RobotCommand>("robot_command");
   new_order_client = n.serviceClient<order_msgs::NewOrder>("new_order");
   complete_order_client = n.serviceClient<order_msgs::CompleteOrder>("complete_order");
+  robot_command_pub = n.advertise<robot_msgs::RobotCmd>("robot_command", 1000);
 
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));

@@ -8,6 +8,13 @@ add_service_files(
     RobotCommand.srv
 )
 
+add_message_files(
+  DIRECTORY msg
+  FILES
+    RobotCmd.msg
+    RobotStatus.msg
+)
+
 
 generate_messages(
   DEPENDENCIES
