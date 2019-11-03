@@ -24,16 +24,13 @@
 #include <packml_ros/packml_ros.h>
 #include <packml_sm/boost/packml_state_machine_continuous.h>
 
-ros::ServiceClient robot_client;
-ros::ServiceClient new_order_client;
-ros::ServiceClient complete_order_client;
-ros::Publisher robot_command_pub;
-int binNumber = 1;
+ros::Publisher robot_stop_pub;
 
 int myExecuteMethod()
 {
   ROS_INFO_STREAM("This is my execute method(begin)");
-
+  ros::Duration(1.0).sleep();
+  /*
   // Get a new order
   order_msgs::NewOrder new_order_srv;
   if (new_order_client.call(new_order_srv))
@@ -46,14 +43,14 @@ int myExecuteMethod()
       msg.command = "pick-blue";
       msg.binNumber = binNumber;
       robot_command_pub.publish(msg);
-      /*robot_msgs::RobotCommand srv;
+      robot_msgs::RobotCommand srv;
       srv.request.command = "pick-blue";
       srv.request.binNumber = binNumber;
       ROS_INFO("Packing blue brick number %d", i+1);
       if (robot_client.call(srv))
       {
         ROS_INFO("Done");
-      }*/
+      }
     }
     // Pick red bricks
     for(int i=0; i < new_order_srv.response.red_amount; i++) {
@@ -87,19 +84,14 @@ int myExecuteMethod()
       ROS_INFO("Order completed");
     }
   }
-
+  */
   ROS_INFO_STREAM("This is my execute method(end)");
   return 0;  // returning zero indicates non-failure
-}
-
-int getNextBrick() {
-  
 }
 
 int myStartingMethod()
 {
   ROS_INFO_STREAM("Starting");
-  binNumber = 1;
   return 0;  // returning zero indicates non-failure
 }
 
@@ -115,15 +107,10 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "packml_node");
   ros::NodeHandle n;
 
-  robot_client = n.serviceClient<robot_msgs::RobotCommand>("robot_command");
-  new_order_client = n.serviceClient<order_msgs::NewOrder>("new_order");
-  complete_order_client = n.serviceClient<order_msgs::CompleteOrder>("complete_order");
-  robot_command_pub = n.advertise<robot_msgs::RobotCmd>("robot_command", 1000);
-
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
-  sm->setSuspended(std::bind(mySuspendedMethod));
+  // sm->setSuspended(std::bind(mySuspendedMethod));
   packml_ros::PackmlRos sm_node(ros::NodeHandle(), ros::NodeHandle("~"), sm);
   sm_node.spin();
 

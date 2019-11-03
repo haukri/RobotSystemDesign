@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ur_robot)
+project(main_control)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   robot_msgs
-  packml_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -199,11 +198,3 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-
-find_package(ur_rtde REQUIRED)
-
-
-add_executable(main src/main.cpp)
-target_link_libraries(main ${catkin_LIBRARIES})
-target_link_libraries(main PRIVATE ur_rtde::rtde)
-add_dependencies(main ur_robot_generate_messages_cpp)
