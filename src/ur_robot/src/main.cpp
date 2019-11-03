@@ -15,6 +15,10 @@
 
 #define STOPPING 7
 #define STARTING 3
+#define HOLDING 10
+#define SUSPENDING 101
+#define UNSUSPENDING 102
+#define UNHOLDING 104
 
 using namespace ur_rtde;
 using namespace std;
@@ -30,6 +34,7 @@ double velocity = 0.8;
 double acceleration = 0.8;
 
 bool robotStopped = false;
+bool robotPaused = false;
 
 std::string robot_ip = "192.168.56.102";
 
@@ -60,11 +65,8 @@ std::vector<double> getBinJointQ(int binNumber) {
   }
 }
 
-bool waitForRobot() {
-  while(!rtde_control->commandDoneAsync() && !robotStopped) {
-
-  }
-  return robotStopped;
+void waitForRobot() {
+  while(!rtde_control->commandDoneAsync() && !robotStopped && !robotPaused) { }
 }
 
 vector<vector<double>> generatePath(string brick, int binNumber) {
@@ -84,12 +86,13 @@ vector<vector<double>> generatePath(string brick, int binNumber) {
 
 void move(vector<double> jointq, double velocity, double acceleration) {
   rtde_control->moveJ(jointq, velocity, acceleration);
-  if(waitForRobot()) {
-    ROS_INFO("Robot stopped, waiting to start again");
-    while(robotStopped){ }
+  waitForRobot();
+  if(robotPaused) {
+    ROS_INFO("Robot paused, waiting to start again");
+    while(robotPaused){ }
     ROS_INFO("Robot starting");
     move(jointq, velocity, acceleration);
-  };
+  }
 }
 
 void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
@@ -97,6 +100,8 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     ROS_INFO("Picking blue brick");
     for(auto jointq : generatePath(cmd->command, cmd->binNumber)) {
       move(jointq, velocity, acceleration);
+      if(robotStopped)
+        break;
     }
     robot_msgs::RobotStatus status;
     status.ready = true;
@@ -106,6 +111,8 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     ROS_INFO("Picking red brick");
     for(auto jointq : generatePath(cmd->command, cmd->binNumber)) {
       move(jointq, velocity, acceleration);
+      if(robotStopped)
+        break;
     }
     robot_msgs::RobotStatus status;
     status.ready = true;
@@ -115,43 +122,13 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     ROS_INFO("Picking yellow brick");
     for(auto jointq : generatePath(cmd->command, cmd->binNumber)) {
       move(jointq, velocity, acceleration);
+      if(robotStopped)
+        break;
     }
     robot_msgs::RobotStatus status;
     status.ready = true;
     robot_status_pub.publish(status);
   }
-}
-
-bool robot_command(robot_msgs::RobotCommand::Request  &req, robot_msgs::RobotCommand::Response &res)
-{
-  if(req.command == "pick-blue") {
-    ROS_INFO("Picking blue brick");
-
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_blue, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(getBinJointQ(req.binNumber), velocity, acceleration);
-    
-  }
-  else if(req.command == "pick-red") {
-    ROS_INFO("Picking red brick");
-
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_red, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(getBinJointQ(req.binNumber), velocity, acceleration);
-  }
-  else if(req.command == "pick-yellow") {
-    ROS_INFO("Picking yellow brick");
-
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_yellow, velocity, acceleration);
-    rtde_control->moveJ(jointq_pick_midpoint, velocity, acceleration);
-    rtde_control->moveJ(getBinJointQ(req.binNumber), velocity, acceleration);
-  }
-
-  res.success = true;
-  return true;
 }
 
 void stopCallback(const packml_msgs::Status::ConstPtr& msg)
@@ -162,9 +139,20 @@ void stopCallback(const packml_msgs::Status::ConstPtr& msg)
     ROS_INFO("Reconnected Robot");
     robotStopped = true;
   }
-  if(msg->state.val == STARTING) {
-    ROS_INFO("Starting Robot");
+  else if(msg->state.val == HOLDING || msg->state.val == SUSPENDING) {
+    ROS_INFO("Pausing Robot");
+    rtde_control->reuploadScript();
+    ROS_INFO("Reconnected Robot");
+    robotPaused = true;
+  }
+  else if(msg->state.val == STARTING) {
+    ROS_INFO("Starting Robot from stopped");
     robotStopped = false;
+
+  }
+  else if(msg->state.val == UNHOLDING || msg->state.val == UNSUSPENDING) {
+    ROS_INFO("Starting Robot from paused");
+    robotPaused = false;
   }
 }
 
@@ -179,8 +167,6 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "ur_robot");
 
   ros::NodeHandle n;
-
-  // ros::ServiceServer service = n.advertiseService("robot_command", robot_command);
 
   ros::Subscriber sub = n.subscribe("packml_node/packml/status", 10, stopCallback);
   ros::Subscriber subRobotCmd = n.subscribe("robot_command_new", 10, robotCommandCallback);

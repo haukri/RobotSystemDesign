@@ -5,3 +5,4 @@ devel
 logs
 node_modules/
 .node-persist
+currentOrder.json
