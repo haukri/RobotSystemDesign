@@ -106,7 +106,7 @@ def deleteOrder():
 
 def publisher():
     global packmlState, currentOrder, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
-    r = rospy.Rate(1)
+    r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
@@ -121,6 +121,7 @@ def publisher():
             elif substate == 5:
                 print("5: New order")
                 currentOrder = newOrder()
+                saveOrder()
                 substate = 10
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
@@ -137,6 +138,9 @@ def publisher():
                     completeOrder(order_number=currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
                         substate = 30
+                        binNumber = 0
+                    else:
+                        binNumber = binNumber + 1
                     deleteOrder()
             elif substate == 20:            # Wait for robot to complete move
                 if robotReady:
