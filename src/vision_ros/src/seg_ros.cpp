@@ -78,7 +78,7 @@ bool check_order(vector<vector<Point>> blue, vector<vector<Point>> red, vector<v
     result = false;
 
   //Count Red
-  if (order[1] != red.size()) {
+  if (order[1] == red.size()) {
     //Check if they are normal
     for( size_t i = 0; i< red.size(); i++ ) {
       if (contourArea(red[i])>60000)
@@ -89,7 +89,7 @@ bool check_order(vector<vector<Point>> blue, vector<vector<Point>> red, vector<v
     result = false;
 
   //Count Yellow
-  if (order[2] != yellow.size()) {
+  if (order[2] == yellow.size()) {
     //Check if they are normal
     for( size_t i = 0; i< yellow.size(); i++ ) {
       if (contourArea(yellow[i])>60000)
@@ -98,4 +98,6 @@ bool check_order(vector<vector<Point>> blue, vector<vector<Point>> red, vector<v
   }
   else
     result = false;
+
+  return result
 }
