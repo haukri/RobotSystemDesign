@@ -45,15 +45,40 @@ function userInterface() {
             const request = new Transition.Request();
             if (message.command == "start")
             {
-                request.command = 2;
+                if (packMLStatus.state.val == 2){
+                    request.command = 6;
+                    console.log('test of reset request')
+                }
+
+                //packMLTransitionService.call(request);
+                //console.log(packMLStatus.state.val)
+                else{
+                    request.command = 2;
+                    console.log('test else statement')
+                }
+
             }
             else if (message.command == "hold")
             {
-                request.command = 4;
+                if (packMLStatus.state.val == 11) {
+                    request.command = 102;
+                }
+                else{
+                    request.command = 4;
+                }
+
             }
             else if (message.command == "stop")
             {
-                request.command = 3;
+                if (packMLStatus.state.val == 9)
+                {
+                    request.command = 1;
+                }
+                else
+                {
+                    request.command = 3;
+                }
+
             }
             else if (message.command == "abort")
             {

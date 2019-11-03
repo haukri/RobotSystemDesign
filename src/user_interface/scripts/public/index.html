@@ -14,12 +14,13 @@
 
     <style>
         table {
-            width: 400px;
+            width: 500px;
         }
         td, th {
 
             text-align: center;
             padding: 4px;
+            font-size: large;
         }
         table, td, th {
             border: 1px solid black;
@@ -46,7 +47,7 @@
             <div class="ui stackable three column grid">
                 <div class="column">
                     <h1>PackML State</h1>
-                    <h3>Currenet state is: </h3></h3><h3 id="state"></h3>
+                    <h3>Currenet state is: </h3><h3 id="state"></h3>
                 </div>
                 <div class="column">
                     <h1>Statistics</h1>
@@ -77,10 +78,9 @@
 
 <!--            <div class="ui home tab" data-tab="packml">-->
         <div id="packml" class="tabcontent">
-<!--                <div class="testing">-->
-                <h4>Testing packml tab</h4>
-                <p>Testing text other than heading in PackML</p>
-<!--                </div>-->
+
+            <div id="packmldraw" align="center"></div>
+
         </div>
 
 <!--            <div class="ui setting tab" data-tab="settings">-->
@@ -91,7 +91,7 @@
                 <h2>Different duration spend and performance</h2>
                 <table>
                     <tr>
-                        <th style="text-align: left; width:250px">Percent time spend available:</th>
+                        <th style="text-align: left"> Percent time spend available:</th>
                         <th id="availability2"></th>
                     </tr>
                     <tr>
@@ -134,9 +134,9 @@
     </div>
     <div class="buttonmenu">
         <div class="four ui buttons">
-            <button class = "ui green button massive" onclick="packmlCommand('start')">Start</button>
-            <button class = "ui orange button massive" onclick="packmlCommand('hold')">Hold</button>
-            <button class = "ui yellow button massive" onclick="packmlCommand('stop')">Stop</button>
+            <button class = "ui green button massive" onclick="packmlCommand('start')">Restart/Start</button>
+            <button class = "ui orange button massive" onclick="packmlCommand('hold')">Hold/Unhold</button>
+            <button class = "ui yellow button massive" onclick="packmlCommand('stop')">Stop/Clear</button>
             <button class = "ui red button massive" onclick="packmlCommand('abort')">Abort</button>
         </div>
     </div>
@@ -145,24 +145,11 @@
         integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="semantic.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.5.0/svg.min.js"></script>
+    <script src="/svg_packml.js"></script>
     <script src="/script.js"></script>
 
-    <script>
-    function changetab(evt, tabName) {
-      var i, tabcontent, tablinks;
-      tabcontent = document.getElementsByClassName("tabcontent");
-      for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-      }
-      tablinks = document.getElementsByClassName("item");
-      for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].className = tablinks[i].className.replace(" active", "");
-      }
-      document.getElementById(tabName).style.display = "block";
-      evt.currentTarget.className += " active";
-    }
-    document.getElementById("defaultOpen").click();
-    </script>
+
 
 
 
