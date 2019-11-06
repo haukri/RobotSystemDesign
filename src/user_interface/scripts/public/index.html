@@ -47,7 +47,17 @@
             <div class="ui stackable three column grid">
                 <div class="column">
                     <h1>PackML State</h1>
-                    <h3>Currenet state is: </h3><h3 id="state"></h3>
+                    <a id="state" class="ui massive teal label"></a>
+                    <br>
+                    <br>
+                    <h1>Current Order</h1>
+                    <a class="ui massive blue label">Blue Bricks</a><a id="blue-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <br>
+                    <br>
+                    <a class="ui massive red label">Red Bricks</a><a id="red-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <br>
+                    <br>
+                    <a class="ui massive yellow label">Yellow Bricks</a><a id="yellow-brick" class="ui massive gray label brick-count">1 Brick</a>
                 </div>
                 <div class="column">
                     <h1>Statistics</h1>
@@ -60,18 +70,7 @@
                     </div>
                 </div>
                 <div class="column">
-                    <h1>The Different states is given by:</h1>
-                    <p>OFF = 1</p>
-                    <p>STOPPED = 2</p>
-                    <p>STARTING = 3</p>
-                    <p>IDLE = 4</p>
-                    <p>SUSPENDED = 5</p>
-                    <p>EXECUTE = 6</p>
-                    <p>STOPPING = 7</p>
-                    <p>ABORTING = 8</p>
-                    <p>ABORTED = 9</p>
-                    <p>HOLDING = 10</p>
-                    <p>HELD = 11</p>
+                    
                 </div>
             </div>
         </div>
@@ -130,16 +129,23 @@
 <!--                <p>total time spend available: <div id="availability2"></div></p>-->
 <!--                </div>-->
         </div>
-
     </div>
-    <div class="buttonmenu">
+
+    <div id="buttonmenu" class="ui grid">
+        <div class="four wide green column" onclick="packmlCommand('start')"><h1 class="command-button">Start/Restart</h1></div>
+        <div class="four wide orange column" onclick="packmlCommand('hold')"><h1 class="command-button">Hold/Unhold</h1></div>
+        <div class="four wide yellow column" onclick="packmlCommand('stop')"><h1 class="command-button">Stop/Clear</h1></div>
+        <div class="four wide red column" onclick="packmlCommand('abort')"><h1 class="command-button">Abort</h1></div>
+    </div>
+
+    <!--<div class="buttonmenu">
         <div class="four ui buttons">
             <button class = "ui green button massive" onclick="packmlCommand('start')">Restart/Start</button>
             <button class = "ui orange button massive" onclick="packmlCommand('hold')">Hold/Unhold</button>
             <button class = "ui yellow button massive" onclick="packmlCommand('stop')">Stop/Clear</button>
             <button class = "ui red button massive" onclick="packmlCommand('abort')">Abort</button>
         </div>
-    </div>
+    </div>-->
 
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"
         integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
