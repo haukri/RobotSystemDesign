@@ -36,7 +36,7 @@ double acceleration = 0.8;
 bool robotStopped = false;
 bool robotPaused = false;
 
-std::string robot_ip = "192.168.56.102";
+std::string robot_ip = "192.168.1.10";
 
 std::vector<double> jointq_pick_red = {-2.12977, -2.51952, -1.13055, -1.05978, 1.59171, -0.0610016 };
 std::vector<double> jointq_pick_blue = {-2.14427, -2.25556, -1.62865, -0.848832, 1.59175, -0.0610016 };

@@ -16,7 +16,7 @@ newOrder = 0
 completeOrder = 0
 currentOrder = 0
 substate = 0
-binNumber = 0
+binNumber = 1
 currentRobotCmd = 0
 lastState = 0
 
@@ -135,7 +135,7 @@ def publisher():
                 else:
                     print("10: Order done")
                     substate = 5
-                    completeOrder(order_number=currentOrder.order_number)
+                    completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
                         substate = 30
                         binNumber = 0
