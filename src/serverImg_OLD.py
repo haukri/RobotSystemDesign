@@ -24,8 +24,6 @@ from pymodbus.device import ModbusDeviceIdentification
 from pymodbus.datastore import ModbusSequentialDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 
 # --------------------------------------------------------------------------- #
 # import the twisted libraries we need
@@ -39,70 +37,50 @@ import logging
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
-# initialize the camera and grab a reference to the raw camera capture
-camera = PiCamera()
-rawCapture = PiRGBArray(camera)
 
 
-def check_image(image):
-    S_min = 67
-    V_min = 78
+def get_contours(image, H_min, H_max, S_min, S_max, V_min, V_max):
+  image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+  #Detect the object based on HSV Range Values
+  lower = np.array([H_min,S_min,V_min])
+  upper = np.array([H_max,S_max,V_max])
+  image_seg = cv.inRange(image_hsv, lower, upper)
 
-    S_max = 255
-    V_max = 255
-
-    result_y = False
-    result_r = False
-    result_b = False
-
-    height, width = image.shape[:2]
-    y=0
-    w=250
-    h=height
-
-    #YELLOW
-    x=210
-    croppedImg = image[y:y+h, x:x+w]
-    H_min = 17
-    H_max = 30
-    image_hsv = cv.cvtColor(croppedImg, cv.COLOR_BGR2HSV)
-    lower = np.array([H_min,S_min,V_min])
-    upper = np.array([H_max,S_max,V_max])
-    image_seg = cv.inRange(image_hsv, lower, upper)
-    count = cv.countNonZero(image_seg)
-    if count > 5000:
-        result_y = True
-
-    #RED
-    x=425
-    croppedImg = image[y:y+h, x:x+w]
-    H_min = 125
-    H_max = 180
-    image_hsv = cv.cvtColor(croppedImg, cv.COLOR_BGR2HSV)
-    lower = np.array([H_min,S_min,V_min])
-    upper = np.array([H_max,S_max,V_max])
-    image_seg = cv.inRange(image_hsv, lower, upper)
-    count = cv.countNonZero(image_seg)
-    if count > 4000:
-        result_r = True
+  canny = cv.Canny( image_seg, 100, 200 )
+  contours, hierarchy = cv.findContours(canny, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+  return contours
 
 
-    #BLUE
-    x=640
-    croppedImg = image[y:y+h, x:x+w]
-    H_min = 82
-    H_max = 118
-    image_hsv = cv.cvtColor(croppedImg, cv.COLOR_BGR2HSV)
-    lower = np.array([H_min,S_min,V_min])
-    upper = np.array([H_max,S_max,V_max])
-    image_seg = cv.inRange(image_hsv, lower, upper)
-    count = cv.countNonZero(image_seg)
-    if count > 2000:
-        result_b = True
+def check_order(blue, red, yellow, order):
+    result = True
+    # Count Blue
+    if order[0] == len(blue):
+        #Check if they are small
+        for i in range(0, len(blue)):
+            if cv.contourArea(blue[i])>60000:
+                result = False
+    else:
+        result = False
 
+    #Count Red
+    if order[1] == len(red):
+    #Check if they are normal
+        for i in range(0, len(red)):
+            if cv.contourArea(red[i])>60000:
+                result = False
+    else:
+        result = False
 
-    return result_y, result_r, result_b
+    #Count Yellow
+    if order[2] == len(yellow):
+    #Check if they are normal
+        for i in range(0, len(yellow)):
+            if cv.contourArea(yellow[i])>60000:
+                result = False
+    else:
+        result = False
 
+    return result
 
 # --------------------------------------------------------------------------- #
 # define your callback process
@@ -122,18 +100,26 @@ def updating_writer(a):
     slave_id = 0x00
     address1 = 0
     address2 = 1
-    address3 = 2
-    values = context[slave_id].getValues(register, address3, count=1)
+    values = context[slave_id].getValues(register, address1, count=1)
+    if values[0] == 1:
+        image = cv.imread("/home/lasse/Desktop/legoWrong.jpeg", cv.IMREAD_COLOR)
+        print("Wrong image")
+    else:
+        image = cv.imread("/home/lasse/Desktop/lego.png", cv.IMREAD_COLOR)
+        print("Right Image")
 
-    camera.capture(rawCapture, format="bgr")
-    image = rawCapture.array
+    order = [2, 1, 1]
 
-    result_y, result_r, result_b = check_image(image)
-    log.debug("new values: " + str(result_y) + " " + str(result_r) + " " + str(result_b))
+    contours_blue = get_contours(image, 52, 118, 72, 255, 0, 255)
+    contours_red = get_contours(image, 0, 15, 72, 255, 0, 255)
+    contours_yellow = get_contours(image, 16, 36, 72, 255, 0, 255)
+
+    result = check_order(contours_blue, contours_red, contours_yellow, order)
+    res = [result]
+    log.debug("new values: " + str(res))
     log.debug("Time for update: " + str(time.time()-now))
-    context[slave_id].setValues(register, address1, [result_y])
-    context[slave_id].setValues(register, address2, [result_r])
-    context[slave_id].setValues(register, address3, [result_b])
+    context[slave_id].setValues(register, address1, res)
+    context[slave_id].setValues(register, address2, res)
 
 
 def run_updating_server():
@@ -142,7 +128,7 @@ def run_updating_server():
     # ----------------------------------------------------------------------- #
 
     store = ModbusSlaveContext(
-        co=ModbusSequentialDataBlock(0, [0, 0, 0, 0]))
+        co=ModbusSequentialDataBlock(0, [0, 0, 0]))
     context = ModbusServerContext(slaves=store, single=True)
 
     # ----------------------------------------------------------------------- #

@@ -99,5 +99,5 @@ bool check_order(vector<vector<Point>> blue, vector<vector<Point>> red, vector<v
   else
     result = false;
 
-  return result
+  return result;
 }
