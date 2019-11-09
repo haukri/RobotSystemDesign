@@ -26,14 +26,70 @@ var http = require('http').createServer(app);
 var io = require('socket.io')(http);
 
 const GetStats = rosnodejs.require('packml_msgs').srv.GetStats;
+const Transition = rosnodejs.require('packml_msgs').srv.Transition;
 
 var packMLStatus = {}
+var packMLTransitionService;
 
 function userInterface() {
 
   // Register node with ROS master
   rosnodejs.initNode('/user_interface_node')
     .then((rosNode) => {
+        io.on('connection', function (socket) {
+        console.log('a user connected');
+        if(packMLStatus) {
+          io.sockets.emit('packml_status', packMLStatus);
+        }
+        socket.on('packml_command', message => {
+            const request = new Transition.Request();
+            if (message.command == "start")
+            {
+                if (packMLStatus.state.val == 2){
+                    request.command = 6;
+                    console.log('test of reset request')
+                }
+
+                //packMLTransitionService.call(request);
+                //console.log(packMLStatus.state.val)
+                else{
+                    request.command = 2;
+                    console.log('test else statement')
+                }
+
+            }
+            else if (message.command == "hold")
+            {
+                if (packMLStatus.state.val == 11) {
+                    request.command = 102;
+                }
+                else{
+                    request.command = 4;
+                }
+
+            }
+            else if (message.command == "stop")
+            {
+                if (packMLStatus.state.val == 9)
+                {
+                    request.command = 1;
+                }
+                else
+                {
+                    request.command = 3;
+                }
+
+            }
+            else if (message.command == "abort")
+            {
+                request.command = 5;
+            }
+            packMLTransitionService.call(request).then((resp) => {
+            console.log('packML Transition state successfull')
+            })
+        });
+
+        });
       const subStatus = rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
         packMLStatus = msg;
         io.sockets.emit('packml_status', packMLStatus);
@@ -51,6 +107,13 @@ function userInterface() {
             }, 1000);
           }
         });
+      packMLTransitionService = rosNode.serviceClient('/packml_node/packml/transition', 'packml_msgs/Transition', { persist: true });
+      rosNode.waitForService(packMLTransitionService.getService(), 2000)
+        .then((available) => {
+          if (available) {
+            // TODO
+          }
+        });
     });
 }
 
@@ -58,14 +121,9 @@ if (require.main === module) {
 
   app.use(express.static(__dirname + '/public'));
 
-  io.on('connection', function (socket) {
-    console.log('a user connected');
-    if(packMLStatus) {
-      io.sockets.emit('packml_status', packMLStatus);
-    }
-  });
 
-  http.listen(3000, function () {
+
+    http.listen(3000, function () {
     console.log('listening on *:3000');
   });
 

@@ -11,3 +11,11 @@
 .header-logo {
     max-width: 300px;
 }
+
+.buttonmenu {
+    position: absolute;
+    height: 65px;
+    width: 100%;
+    bottom: 0px; left: 0px; right: 0px;
+    /*background-color: #1a69a4;*/
+}

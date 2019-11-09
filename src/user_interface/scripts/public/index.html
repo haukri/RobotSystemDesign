@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:>
 
 <head>
     <meta charset="utf-8" />
@@ -11,6 +11,22 @@
     <link rel="stylesheet" href="main.css" />
     <link rel="stylesheet" type="text/css" href="semantic.min.css">
     <link rel="icon" href="images/favicon.png" />
+
+    <style>
+        table {
+            width: 500px;
+        }
+        td, th {
+
+            text-align: center;
+            padding: 4px;
+            font-size: large;
+        }
+        table, td, th {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+    </style>
 </head>
 
 <body>
@@ -19,28 +35,109 @@
     </div>
     <div class="app-wrapper">
         <div class="ui three item menu">
-            <a class="item active">Home</a>
-            <a class="item">PackML State Diagram</a>
-            <a class="item">Settings</a>
+            <!--<a class="item active" data-tab="home">Home</a>
+            <a class="item" data-tab="packml">PackML State Diagram</a>
+            <a class="item" data-tab="settings">Settings</a>-->
+            <a class="item active" onclick="changetab(event, 'home')" id="defaultOpen">Home</a>
+            <a class="item" onclick="changetab(event, 'packml')">PackML State Diagram</a>
+            <a class="item" onclick="changetab(event, 'settings')">Settings</a>
         </div>
-        <div class="ui stackable three column grid">
-            <div class="column">
-                <h1>PackML State</h1>
-                <h3 id="state"></h3>
-            </div>
-            <div class="column">
-                <h1>Statistics</h1>
-                <h3 id="availability"></h3>
-                <div class="ui indicating progress" id="availability-progress">
-                    <div class="bar">
-                        <div class="progress"></div>
+
+        <div id="home" class="tabcontent active">
+            <div class="ui stackable three column grid">
+                <div class="column">
+                    <h1>PackML State</h1>
+                    <h3>Currenet state is: </h3><h3 id="state"></h3>
+                </div>
+                <div class="column">
+                    <h1>Statistics</h1>
+                    <h3 id="availability"></h3>
+                    <div class="ui indicating progress" id="availability-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">Availability</div>
                     </div>
-                    <div class="label">Availability</div>
+                </div>
+                <div class="column">
+                    <h1>The Different states is given by:</h1>
+                    <p>OFF = 1</p>
+                    <p>STOPPED = 2</p>
+                    <p>STARTING = 3</p>
+                    <p>IDLE = 4</p>
+                    <p>SUSPENDED = 5</p>
+                    <p>EXECUTE = 6</p>
+                    <p>STOPPING = 7</p>
+                    <p>ABORTING = 8</p>
+                    <p>ABORTED = 9</p>
+                    <p>HOLDING = 10</p>
+                    <p>HELD = 11</p>
                 </div>
             </div>
-            <div class="column">
-                <h1></h1>
-            </div>
+        </div>
+
+<!--            <div class="ui home tab" data-tab="packml">-->
+        <div id="packml" class="tabcontent">
+
+            <div id="packmldraw" align="center"></div>
+
+        </div>
+
+<!--            <div class="ui setting tab" data-tab="settings">-->
+        <div id="settings" class="tabcontent">
+<!--                <div class="testing">-->
+                <h4>Testing settings tab</h4>
+                <p>Testing text other than heading in Settings</p>
+                <h2>Different duration spend and performance</h2>
+                <table>
+                    <tr>
+                        <th style="text-align: left"> Percent time spend available:</th>
+                        <th id="availability2"></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Performance:</th>
+                        <th id="performance"></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Quality</th>
+                        <th><div id="quality"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Overall equipment effectivness:</th>
+                        <th><div id="oee"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Total duration:</th>
+                        <th><div id="duration"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Held Duration:</th>
+                        <th><div id="heldduration"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">suspended duration:</th>
+                        <th><div id="suspendedduration"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Idle duration:</th>
+                        <th><div id="idleduration"></div></th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: left">Execute duration:</th>
+                        <th><div id="executeduration"></div></th>
+                    </tr>
+                </table>
+<!--                <p>total time spend available: <div id="availability2"></div></p>-->
+<!--                </div>-->
+        </div>
+
+    </div>
+    <div class="buttonmenu">
+        <div class="four ui buttons">
+            <button class = "ui green button massive" onclick="packmlCommand('start')">Restart/Start</button>
+            <button class = "ui orange button massive" onclick="packmlCommand('hold')">Hold/Unhold</button>
+            <button class = "ui yellow button massive" onclick="packmlCommand('stop')">Stop/Clear</button>
+            <button class = "ui red button massive" onclick="packmlCommand('abort')">Abort</button>
         </div>
     </div>
 
@@ -48,7 +145,15 @@
         integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
     <script src="semantic.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/svg.js/2.5.0/svg.min.js"></script>
+    <script src="/svg_packml.js"></script>
     <script src="/script.js"></script>
+
+
+
+
+
+
 </body>
 
 </html>
