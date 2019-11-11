@@ -60,8 +60,19 @@ std::vector<double> joint_q1 = {-1.12738, -1.59118, -2.1059, -0.96981, 1.59176, 
 std::vector<double> joint_q2 = {-1.82089, -2.04634, -1.22491, -1.11367, 1.59176, 0.0321989};
 
 std::vector<double> joint_verify_feeder = {-1.78183, -1.62972, -2.13145, -1.78324, 1.72335, 0.0565257};
+std::vector<double> jointq_discard_bin = {-2.17897, -1.86781, -2.01717, -0.829591, 1.64373, -0.175439};
 
+std::vector<double> jointq_pick_bins_12 = {-0.959291, -1.84798, -2.24979, -0.642775, 1.56402, -0.565669};
+std::vector<double> jointq_pick_bins_12_over = {-0.959411, -1.76864, -2.22276, -0.749148, 1.5644, -0.565538};
 
+std::vector<double> jointq_dropoff_bins_12 = {0.112473, -1.6066, -2.53273, -0.591482, 1.58511, -1.11164};
+std::vector<double> jointq_dropoff_bins_12_over = {0.112257, -1.48768, -2.48922, -0.753941, 1.58568, -1.11153};
+
+std::vector<double> jointq_pick_bins_34 = {-1.15152, -1.70928, -2.43062, -0.599233, 1.55877, -0.757671};
+std::vector<double> jointq_pick_bins_34_over = {-1.15169, -1.63318, -2.40567, -0.70023, 1.5592, -0.757599};
+
+std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
+std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
 
 std::vector<double> getBinJointQ(int binNumber) {
   switch(binNumber) {
@@ -217,6 +228,169 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     move(joint_verify_feeder, velocity_high, acceleration);
     if(robotStopped)
       return;
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "discard-yellow") {
+    ROS_INFO("Discarding yellow brick");
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_yellow_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_yellow, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_yellow_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_discard_bin, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "discard-blue") {
+    ROS_INFO("Discarding blue brick");
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_blue_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_blue, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_blue_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_discard_bin, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "discard-red") {
+    ROS_INFO("Discarding red brick");
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_red_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_red, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_red_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_discard_bin, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+  else if(cmd->command == "dropoff-boxes") {
+    ROS_INFO("Dropping off boxes");
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_bins_12_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+
+    move(jointq_dropoff_bins_12_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_34_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_34, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_bins_34_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_34_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_34, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+
+    move(jointq_dropoff_bins_34_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+
     robot_msgs::RobotStatus status;
     status.ready = true;
     robot_status_pub.publish(status);
