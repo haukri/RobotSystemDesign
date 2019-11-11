@@ -29,6 +29,8 @@ const GetStats = rosnodejs.require('packml_msgs').srv.GetStats;
 const Transition = rosnodejs.require('packml_msgs').srv.Transition;
 
 var packMLStatus = {}
+var orderStatus;
+var mainControlStatus;
 var packMLTransitionService;
 
 function userInterface() {
@@ -40,6 +42,12 @@ function userInterface() {
         console.log('a user connected');
         if(packMLStatus) {
           io.sockets.emit('packml_status', packMLStatus);
+        }
+        if(orderStatus) {
+          io.sockets.emit('order_status', orderStatus);
+        }
+        if(mainControlStatus) {
+          io.sockets.emit('main_control_status', mainControlStatus);
         }
         socket.on('packml_command', message => {
             const request = new Transition.Request();
@@ -93,6 +101,16 @@ function userInterface() {
       const subStatus = rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
         packMLStatus = msg;
         io.sockets.emit('packml_status', packMLStatus);
+      });
+
+      const orderStatusSub = rosNode.subscribe('/order_status', 'order_msgs/OrderStatus', (msg) => {
+        orderStatus = msg;
+        io.sockets.emit('order_status', orderStatus);
+      });
+
+      const mainControlStatusSub = rosNode.subscribe('/main_control_status', 'std_msgs/String', (msg) => {
+        mainControlStatus = msg;
+        io.sockets.emit('main_control_status', mainControlStatus);
       });
 
       let serviceClient = rosNode.serviceClient('/packml_node/packml/get_stats', 'packml_msgs/GetStats', { persist: true });

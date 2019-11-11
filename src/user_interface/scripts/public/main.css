@@ -1,5 +1,5 @@
 .app-wrapper {
-    margin: 30px;
+    margin: 30px 30px 200px 30px;
 }
 
 .header-logo-container {
@@ -36,11 +36,13 @@
 .brick-count {
     width: 20%;
     text-align: center;
+    margin: 0 !important;
 }
 
 .brick-count-label {
     text-align: center;
     position: absolute;
-    width: 50%;
+    width: 73%;
     left: 25%;
+    margin: 0 !important;
 }

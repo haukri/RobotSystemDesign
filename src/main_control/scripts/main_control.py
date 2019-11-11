@@ -3,6 +3,7 @@
 import rospy
 from robot_msgs.msg import RobotCmd, RobotStatus
 from order_msgs.srv import NewOrder, CompleteOrder
+from std_msgs.msg import String
 from pymodbus_client.srv import feeder_srv
 from packml_msgs.msg import Status
 import threading
@@ -10,6 +11,7 @@ import json
 from Queue import Queue
 
 robotCommandPub = 0
+mainStatusPub = 0
 packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
@@ -27,6 +29,8 @@ bricksVerified = type('', (), {})()
 bricksVerified.blue = False
 bricksVerified.red = False
 bricksVerified.yellow = False
+message = ""
+lastMessage = ""
 
 STOPPED = 2
 STARTING = 3
@@ -113,21 +117,21 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, message, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
         if packmlState == EXECUTE:
             if substate == 0:                # Get new order
-                print("0: New order")
+                message = "0: New order"
                 if(not loadOrder()):
-                    print("No saved order found")
+                    message = "No saved order found"
                     currentOrder = newOrder()
                     saveOrder()
                 substate = 10
             elif substate == 5:
-                print("5: New order")
+                message = "5: New order"
                 currentOrder = newOrder()
                 saveOrder()
                 substate = 10
@@ -137,11 +141,11 @@ def publisher():
                     currentRobotCmd.command = 'verify-bricks'
                     currentRobotCmd.binNumber = 1
                     robotCommandPub.publish(currentRobotCmd)
-                    print("10: Verifying bricks")
+                    message = "10: Verifying bricks"
                     robotReady = False
                     substate = 11
                 else:
-                    print("10: Order done")
+                    message = "10: Order done"
                     substate = 5
                     completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
@@ -197,15 +201,15 @@ def publisher():
                 currentRobotCmd.command = getNextBrick()
                 currentRobotCmd.binNumber = binNumber
                 robotCommandPub.publish(currentRobotCmd)
-                print("10: Packing brick")
+                message = "19: Packing brick"
                 robotReady = False
                 substate = 20
             elif substate == 20:            # Wait for robot to complete move
                 if robotReady:
-                    print("20: Packing brick done")
+                    message = "20: Packing brick done"
                     substate = 10
             elif substate == 30:            # Call MiR robot for pickup
-                print("30: Call MiR robot for pickup")
+                message = "30: Call MiR robot for pickup"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = 'dropoff-boxes'
                 currentRobotCmd.binNumber = 0
@@ -213,24 +217,36 @@ def publisher():
                 robotReady = False
                 substate = 40
             elif substate == 40:            
-                print("40: Wait for MiR to arrive")
+                message = "40: Wait for MiR to arrive"
                 if robotReady:
                     substate = 50
             elif substate == 50:            
-                print("50: Transfer boxes over to MiR")
+                message = "50: Transfer boxes over to MiR"
                 substate = 60
             elif substate == 60:            
-                print("60: Wait for transfer done")
+                message = "60: Wait for transfer done"
                 substate = 5
         elif packmlState == STARTING:
             if substate < 30:
                 substate = 0
+        publishStatus()
         r.sleep()
 
 
+def publishStatus():
+    global message, lastMessage
+    if message != lastMessage:
+        print(message)
+        msg = String()
+        msg.data = message
+        mainStatusPub.publish(msg)
+    lastMessage = message
+
+
 def listener():
-    global robotCommandPub, newOrder, completeOrder, feederCheck
+    global robotCommandPub, mainStatusPub, newOrder, completeOrder, feederCheck
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
+    mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
 
     rospy.init_node('main_control', anonymous=True)
     
@@ -239,11 +255,11 @@ def listener():
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')
-    rospy.wait_for_service('feeder_check')
+    # rospy.wait_for_service('feeder_check')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
-    feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
+    # feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
 
     thread = threading.Thread(target=publisher)
     thread.start()

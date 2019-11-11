@@ -29,6 +29,18 @@ $(document).ready(function() {
 
 
     });
+
+    socket.on('order_status', function(status){
+        document.getElementById("order-number").innerHTML = status.order_number;
+        document.getElementById("red-brick").innerHTML = status.red_amount;
+        document.getElementById("blue-brick").innerHTML = status.blue_amount;
+        document.getElementById("yellow-brick").innerHTML = status.yellow_amount;
+
+    });
+
+    socket.on('main_control_status', function(status){
+        document.getElementById("main-control-state").innerHTML = status.data;
+    });
     
     socket.on('packml_stats', function(msg){
         $('#availability-progress').progress({
@@ -43,15 +55,6 @@ $(document).ready(function() {
         $('#oee-progress').progress({
             percent: msg.stats.overall_equipment_effectiveness * 100
         });
-        document.getElementById( "availability2").innerHTML = msg.stats.availability;
-        document.getElementById( "performance").innerHTML = msg.stats.performance;
-        document.getElementById( "quality").innerHTML = msg.stats.quality;
-        document.getElementById( "oee").innerHTML = msg.stats.overall_equipment_effectiveness;
-        document.getElementById( "duration").innerHTML = msg.stats.duration.data.secs;
-        document.getElementById( "heldduration").innerHTML = msg.stats.held_duration.data.secs;
-        document.getElementById( "suspendedduration").innerHTML = msg.stats.susp_duration.data.secs;
-        document.getElementById( "idleduration").innerHTML = msg.stats.idle_duration.data.secs;
-        document.getElementById( "executeduration").innerHTML = msg.stats.exe_duration.data.secs;
     });
     /*socket.on('packml_stats', function(msg){
         document.getElementById( "availability").innerHTML = msg.stats.availability
@@ -63,8 +66,8 @@ $(document).ready(function() {
         var $tmp = $('svg', contents);
         image.svg($tmp.html());
         image.attr('viewBox', $tmp.attr('viewBox'));
-        image.attr('width', $tmp.attr('width'));
-        image.attr('height', $tmp.attr('height'));
+        image.attr('width', "100%"); //$tmp.attr('width'));
+        image.attr('height', "50vh"); //$tmp.attr('height'));
     }, 'xml');
 
 
