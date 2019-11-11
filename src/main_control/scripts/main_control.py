@@ -3,6 +3,7 @@
 import rospy
 from robot_msgs.msg import RobotCmd, RobotStatus
 from order_msgs.srv import NewOrder, CompleteOrder
+from pymodbus_client.srv import feeder_srv
 from packml_msgs.msg import Status
 import threading
 import json
@@ -14,11 +15,18 @@ stateChangeQueue = Queue()
 robotReady = True
 newOrder = 0
 completeOrder = 0
+feederCheck = 0
 currentOrder = 0
 substate = 0
 binNumber = 1
 currentRobotCmd = 0
 lastState = 0
+bricksValid = 0
+hasDiscardedBricks = False
+bricksVerified = type('', (), {})()
+bricksVerified.blue = False
+bricksVerified.red = False
+bricksVerified.yellow = False
 
 STOPPED = 2
 STARTING = 3
@@ -105,7 +113,7 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
@@ -126,32 +134,88 @@ def publisher():
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
                     currentRobotCmd = RobotCmd()
-                    currentRobotCmd.command = getNextBrick()
-                    currentRobotCmd.binNumber = binNumber
+                    currentRobotCmd.command = 'verify-bricks'
+                    currentRobotCmd.binNumber = 1
                     robotCommandPub.publish(currentRobotCmd)
-                    print("10: Packing brick")
+                    print("10: Verifying bricks")
                     robotReady = False
-                    substate = 20
+                    substate = 11
                 else:
                     print("10: Order done")
                     substate = 5
                     completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
                         substate = 30
-                        binNumber = 0
+                        binNumber = 1
                     else:
                         binNumber = binNumber + 1
                     deleteOrder()
+            elif substate == 11:            # Discard all bricks that are not valid
+                if robotReady:
+                    # Call verify brick service
+                    rospy.sleep(0.5)
+                    bricksValid = feederCheck()
+                    hasDiscardedBricks = False
+                    substate = 12
+            elif substate == 12:
+                if not bricksValid.red:
+                    bricksValid.red = True
+                    currentRobotCmd = RobotCmd()
+                    currentRobotCmd.command = 'discard-red'
+                    currentRobotCmd.binNumber = 0
+                    robotCommandPub.publish(currentRobotCmd)
+                    robotReady = False
+                    substate = 18
+                elif not bricksValid.blue:
+                    bricksValid.blue = True
+                    currentRobotCmd = RobotCmd()
+                    currentRobotCmd.command = 'discard-blue'
+                    currentRobotCmd.binNumber = 0
+                    robotCommandPub.publish(currentRobotCmd)
+                    robotReady = False
+                    substate = 18
+                elif not bricksValid.yellow:
+                    bricksValid.yellow = True
+                    currentRobotCmd = RobotCmd()
+                    currentRobotCmd.command = 'discard-yellow'
+                    currentRobotCmd.binNumber = 0
+                    robotCommandPub.publish(currentRobotCmd)
+                    robotReady = False
+                    substate = 18
+                else:
+                    if hasDiscardedBricks:
+                        substate = 10
+                    else:
+                        substate = 19
+            elif substate == 18:            # Wait for robot to finish executing discard move
+                if robotReady:
+                    hasDiscardedBricks = True
+                    substate = 12     
+            elif substate == 19:
+                # Get next brick and make message
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = getNextBrick()
+                currentRobotCmd.binNumber = binNumber
+                robotCommandPub.publish(currentRobotCmd)
+                print("10: Packing brick")
+                robotReady = False
+                substate = 20
             elif substate == 20:            # Wait for robot to complete move
                 if robotReady:
                     print("20: Packing brick done")
                     substate = 10
             elif substate == 30:            # Call MiR robot for pickup
                 print("30: Call MiR robot for pickup")
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = 'dropoff-boxes'
+                currentRobotCmd.binNumber = 0
+                robotCommandPub.publish(currentRobotCmd)
+                robotReady = False
                 substate = 40
             elif substate == 40:            
                 print("40: Wait for MiR to arrive")
-                substate = 50
+                if robotReady:
+                    substate = 50
             elif substate == 50:            
                 print("50: Transfer boxes over to MiR")
                 substate = 60
@@ -165,7 +229,7 @@ def publisher():
 
 
 def listener():
-    global robotCommandPub, newOrder, completeOrder
+    global robotCommandPub, newOrder, completeOrder, feederCheck
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
 
     rospy.init_node('main_control', anonymous=True)
@@ -175,9 +239,11 @@ def listener():
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')
+    rospy.wait_for_service('feeder_check')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
+    feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
 
     thread = threading.Thread(target=publisher)
     thread.start()
