@@ -12,10 +12,30 @@
     max-width: 300px;
 }
 
-.buttonmenu {
-    position: absolute;
-    height: 65px;
+#buttonmenu {
+    position: fixed;
+    height: 80px;
     width: 100%;
-    bottom: 0px; left: 0px; right: 0px;
-    /*background-color: #1a69a4;*/
+    bottom: 0px;
+    cursor: pointer;
+}
+
+.ui.grid {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.command-button {
+    line-height: 60px;
+    text-align: center;
+    font-size: 2vw;
+}
+
+.brick-count {
+    position: absolute;
+    left: 40%;
+    width: 40%;
+    text-align: center;
 }

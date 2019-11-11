@@ -1,0 +1,2 @@
+string command
+int8 binNumber

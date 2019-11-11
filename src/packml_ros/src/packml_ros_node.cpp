@@ -17,22 +17,81 @@
  */
 
 #include <ros/ros.h>
+#include "robot_msgs/RobotCommand.h"
+#include "robot_msgs/RobotCmd.h"
+#include "order_msgs/NewOrder.h"
+#include "order_msgs/CompleteOrder.h"
 #include <packml_ros/packml_ros.h>
 #include <packml_sm/boost/packml_state_machine_continuous.h>
+
+ros::Publisher robot_stop_pub;
 
 int myExecuteMethod()
 {
   ROS_INFO_STREAM("This is my execute method(begin)");
   ros::Duration(1.0).sleep();
+  /*
+  // Get a new order
+  order_msgs::NewOrder new_order_srv;
+  if (new_order_client.call(new_order_srv))
+  {
+    ROS_INFO("Got new order");
+    ROS_INFO("Packing in bin number %d", binNumber);
+    // Pick blue bricks
+    for(int i=0; i < new_order_srv.response.blue_amount; i++) {
+      robot_msgs::RobotCmd msg;
+      msg.command = "pick-blue";
+      msg.binNumber = binNumber;
+      robot_command_pub.publish(msg);
+      robot_msgs::RobotCommand srv;
+      srv.request.command = "pick-blue";
+      srv.request.binNumber = binNumber;
+      ROS_INFO("Packing blue brick number %d", i+1);
+      if (robot_client.call(srv))
+      {
+        ROS_INFO("Done");
+      }
+    }
+    // Pick red bricks
+    for(int i=0; i < new_order_srv.response.red_amount; i++) {
+      robot_msgs::RobotCommand srv;
+      srv.request.command = "pick-red";
+      srv.request.binNumber = binNumber;
+      ROS_INFO("Packing red brick number %d", i+1);
+      if (robot_client.call(srv))
+      {
+        ROS_INFO("Done");
+      }
+    }
+    // Pick yellow bricks
+    for(int i=0; i < new_order_srv.response.yellow_amount; i++) {
+      robot_msgs::RobotCommand srv;
+      srv.request.command = "pick-yellow";
+      srv.request.binNumber = binNumber;
+      ROS_INFO("Packing yellow brick number %d", i+1);
+      if (robot_client.call(srv))
+      {
+        ROS_INFO("Done");
+      }
+    }
+    binNumber = binNumber < 4 ? binNumber+1 : 1;
+    // Call MIR Robot
+
+    // Complete the order
+    order_msgs::CompleteOrder complete_order_srv;
+    complete_order_srv.request.order_number = new_order_srv.response.order_number;
+    if(complete_order_client.call(complete_order_srv)) {
+      ROS_INFO("Order completed");
+    }
+  }
+  */
   ROS_INFO_STREAM("This is my execute method(end)");
   return 0;  // returning zero indicates non-failure
 }
 
 int myStartingMethod()
 {
-  ROS_INFO_STREAM("This is my starting method(begin)");
-  ros::Duration(1.0).sleep();
-  ROS_INFO_STREAM("This is my starting method(end)");
+  ROS_INFO_STREAM("Starting");
   return 0;  // returning zero indicates non-failure
 }
 
@@ -46,10 +105,12 @@ int mySuspendedMethod() {
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "packml_node");
+  ros::NodeHandle n;
+
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
-  sm->setSuspended(std::bind(mySuspendedMethod));
+  // sm->setSuspended(std::bind(mySuspendedMethod));
   packml_ros::PackmlRos sm_node(ros::NodeHandle(), ros::NodeHandle("~"), sm);
   sm_node.spin();
 

@@ -1,0 +1,47 @@
+stages:
+  - build
+  - doc
+  - deploy
+
+build:
+  stage: build
+  image: registry.gitlab.com/sdurobotics/docker-images/robwork-build:ubuntu-1604
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DPYTHON_BINDINGS:BOOL=OFF -DUSE_WERROR:BOOL=ON ..
+    - make
+
+sphinx_html:
+  stage: doc
+  image: registry.gitlab.com/sdurobotics/docker-images/robwork-build:ubuntu-1804-doc
+  before_script:
+      # Install doc dependencies
+      - apt-get update && apt-get -y install fonts-dejavu fonts-liberation fonts-noto 
+      - pip3 install breathe
+  script:
+    - mkdir build
+    - cd build
+    - cmake -DCODE:BOOL=OFF -DPYTHON_BINDINGS:BOOL=OFF -DDOC:STRING=html -DWERROR:BOOL=ON ..
+    - make doc
+  artifacts:
+    paths:
+      - build/doc/html
+
+pages:
+  stage: deploy
+  variables:
+    GIT_STRATEGY: none
+#  only:
+#    - tags@prier/ur_rtde
+  dependencies:
+    - sphinx_html
+  image: registry.gitlab.com/sdurobotics/docker-images/robwork-build:ubuntu-1804-doc
+  script:
+    - mv build/doc/html public
+  artifacts:
+    paths:
+      - public
+
+
+    

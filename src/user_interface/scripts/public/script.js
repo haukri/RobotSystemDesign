@@ -1,9 +1,29 @@
 var socket = io();
 
+var packMLStates = {};
+packMLStates[2] = 'STOPPED'
+packMLStates[3] = 'STARTING'
+packMLStates[4] = 'IDLE'
+packMLStates[5] = 'SUSPENDED'
+packMLStates[6] = 'EXECUTE'
+packMLStates[7] = 'STOPPING'
+packMLStates[8] = 'ABORTING'
+packMLStates[9] = 'ABORTED'
+packMLStates[10] = 'HOLDING'
+packMLStates[11] = 'HELD'
+packMLStates[100] = 'RESETTING'
+packMLStates[101] = 'SUSPENDING'
+packMLStates[102] = 'UNSUSPENDING'
+packMLStates[103] = 'CLEARING'
+packMLStates[104] = 'UNHOLDING'
+packMLStates[105] = 'COMPLETING'
+packMLStates[106] = 'COMPLETE'
+
+
 $(document).ready(function() {
 
     socket.on('packml_status', function(status){
-        document.getElementById("state").innerHTML = status.state.val;
+        document.getElementById("state").innerHTML = packMLStates[status.state.val];
         resetpacmkdaigram();
         setpackmldiagram(status.state.val);
 
