@@ -126,12 +126,12 @@ def publisher():
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
                     currentRobotCmd = RobotCmd()
-                    currentRobotCmd.command = getNextBrick()
-                    currentRobotCmd.binNumber = binNumber
+                    currentRobotCmd.command = 'verify-bricks'
+                    currentRobotCmd.binNumber = 1
                     robotCommandPub.publish(currentRobotCmd)
-                    print("10: Packing brick")
+                    print("10: Verifying bricks")
                     robotReady = False
-                    substate = 20
+                    substate = 11
                 else:
                     print("10: Order done")
                     substate = 5
@@ -142,6 +142,18 @@ def publisher():
                     else:
                         binNumber = binNumber + 1
                     deleteOrder()
+            elif substate == 11:
+                if robotReady:
+                    # Call verify brick service
+
+            elif substate == 19:
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = getNextBrick()
+                currentRobotCmd.binNumber = binNumber
+                robotCommandPub.publish(currentRobotCmd)
+                print("10: Packing brick")
+                robotReady = False
+                substate = 20
             elif substate == 20:            # Wait for robot to complete move
                 if robotReady:
                     print("20: Packing brick done")
