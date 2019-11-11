@@ -1,4 +1,6 @@
-string colour
+
 ---
-bool check
+bool yellow
+bool red
+bool blue
 

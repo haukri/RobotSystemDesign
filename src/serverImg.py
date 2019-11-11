@@ -41,7 +41,6 @@ log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
-rawCapture = PiRGBArray(camera)
 
 
 def check_image(image):
@@ -57,11 +56,11 @@ def check_image(image):
 
     height, width = image.shape[:2]
     y=0
-    w=250
+    w=300
     h=height
 
     #YELLOW
-    x=210
+    x=700
     croppedImg = image[y:y+h, x:x+w]
     H_min = 17
     H_max = 30
@@ -70,11 +69,11 @@ def check_image(image):
     upper = np.array([H_max,S_max,V_max])
     image_seg = cv.inRange(image_hsv, lower, upper)
     count = cv.countNonZero(image_seg)
-    if count > 5000:
+    if count > 23000:
         result_y = True
 
     #RED
-    x=425
+    x=400
     croppedImg = image[y:y+h, x:x+w]
     H_min = 125
     H_max = 180
@@ -83,12 +82,12 @@ def check_image(image):
     upper = np.array([H_max,S_max,V_max])
     image_seg = cv.inRange(image_hsv, lower, upper)
     count = cv.countNonZero(image_seg)
-    if count > 4000:
+    if count > 15000:
         result_r = True
 
 
     #BLUE
-    x=640
+    x=100
     croppedImg = image[y:y+h, x:x+w]
     H_min = 82
     H_max = 118
@@ -97,7 +96,7 @@ def check_image(image):
     upper = np.array([H_max,S_max,V_max])
     image_seg = cv.inRange(image_hsv, lower, upper)
     count = cv.countNonZero(image_seg)
-    if count > 2000:
+    if count > 7500:
         result_b = True
 
 
@@ -125,6 +124,7 @@ def updating_writer(a):
     address3 = 2
     values = context[slave_id].getValues(register, address3, count=1)
 
+    rawCapture = PiRGBArray(camera)
     camera.capture(rawCapture, format="bgr")
     image = rawCapture.array
 
@@ -159,10 +159,10 @@ def run_updating_server():
     # ----------------------------------------------------------------------- #
     # run the server you want
     # ----------------------------------------------------------------------- #
-    time = 5  # 5 seconds delay
+    time = 0.5  # 5 seconds delay
     loop = LoopingCall(f=updating_writer, a=context)
     loop.start(time, now=False) # initially delay by time
-    StartTcpServer(context, identity=identity, address=("localhost", 5020))
+    StartTcpServer(context, identity=identity, address=("192.168.1.202", 5020))
 
 
 if __name__ == "__main__":
