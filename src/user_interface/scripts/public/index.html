@@ -48,20 +48,39 @@
                 <div class="column">
                     <h1>PackML State</h1>
                     <a id="state" class="ui massive teal label"></a>
-                    <br>
-                    <br>
+                    <div class="ui section divider"></div>
+                    <h1>Status</h1>
+                    <a id="state" class="ui huge orange label">Waiting for MiR robot to pickup order</a>
+                    <div class="ui section divider"></div>
                     <h1>Current Order</h1>
-                    <a class="ui massive blue label">Blue Bricks</a><a id="blue-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <a class="ui massive blue label brick-count-label">Blue Bricks</a><a id="blue-brick" class="ui massive gray label brick-count">1</a>
                     <br>
                     <br>
-                    <a class="ui massive red label">Red Bricks</a><a id="red-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <a class="ui massive red label brick-count-label">Red Bricks</a><a id="red-brick" class="ui massive gray label brick-count">1</a>
                     <br>
                     <br>
-                    <a class="ui massive yellow label">Yellow Bricks</a><a id="yellow-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <a class="ui massive yellow label brick-count-label">Yellow Bricks</a><a id="yellow-brick" class="ui massive gray label brick-count">1</a>
                 </div>
                 <div class="column">
                     <h1>Statistics</h1>
-                    <h3 id="availability"></h3>
+                    <div class="ui indicating progress" id="oee-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">OEE</div>
+                    </div>
+                    <div class="ui indicating progress" id="quality-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">Quality</div>
+                    </div>
+                    <div class="ui indicating progress" id="performance-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">Performance</div>
+                    </div>
                     <div class="ui indicating progress" id="availability-progress">
                         <div class="bar">
                             <div class="progress"></div>

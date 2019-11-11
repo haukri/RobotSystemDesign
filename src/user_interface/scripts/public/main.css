@@ -34,8 +34,13 @@
 }
 
 .brick-count {
-    position: absolute;
-    left: 40%;
-    width: 40%;
+    width: 20%;
     text-align: center;
+}
+
+.brick-count-label {
+    text-align: center;
+    position: absolute;
+    width: 50%;
+    left: 25%;
 }

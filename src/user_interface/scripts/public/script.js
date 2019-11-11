@@ -34,6 +34,15 @@ $(document).ready(function() {
         $('#availability-progress').progress({
             percent: msg.stats.availability * 100
         });
+        $('#quality-progress').progress({
+            percent: msg.stats.quality * 100
+        });
+        $('#performance-progress').progress({
+            percent: msg.stats.performance * 100
+        });
+        $('#oee-progress').progress({
+            percent: msg.stats.overall_equipment_effectiveness * 100
+        });
         document.getElementById( "availability2").innerHTML = msg.stats.availability;
         document.getElementById( "performance").innerHTML = msg.stats.performance;
         document.getElementById( "quality").innerHTML = msg.stats.quality;
