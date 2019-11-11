@@ -12,6 +12,7 @@ from Queue import Queue
 
 robotCommandPub = 0
 mainStatusPub = 0
+oeeCommandsPub = 0
 packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
@@ -31,6 +32,7 @@ bricksVerified.red = False
 bricksVerified.yellow = False
 message = ""
 lastMessage = ""
+goodOrder = True
 
 STOPPED = 2
 STARTING = 3
@@ -117,22 +119,22 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, message, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, message, goodOrder, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
         if packmlState == EXECUTE:
             if substate == 0:                # Get new order
-                message = "0: New order"
+                message = "0: load order"
                 if(not loadOrder()):
                     message = "No saved order found"
-                    currentOrder = newOrder()
-                    saveOrder()
+                    substate = 5
                 substate = 10
             elif substate == 5:
                 message = "5: New order"
                 currentOrder = newOrder()
+                goodOrder = True
                 saveOrder()
                 substate = 10
             elif substate == 10:             # Command robot for next brick
@@ -154,6 +156,10 @@ def publisher():
                     else:
                         binNumber = binNumber + 1
                     deleteOrder()
+                    if goodOrder:
+                        publishGoodOrder()
+                    else:
+                        publishBadOrder()
             elif substate == 11:            # Discard all bricks that are not valid
                 if robotReady:
                     # Call verify brick service
@@ -193,6 +199,7 @@ def publisher():
                         substate = 19
             elif substate == 18:            # Wait for robot to finish executing discard move
                 if robotReady:
+                    goodOrder = False
                     hasDiscardedBricks = True
                     substate = 12     
             elif substate == 19:
@@ -243,10 +250,23 @@ def publishStatus():
     lastMessage = message
 
 
+def publishBadOrder():
+    msg = String()
+    msg.data = 'bad-brick'
+    oeeCommandsPub.publish(msg)
+
+
+def publishGoodOrder():
+    msg = String()
+    msg.data = 'good-brick'
+    oeeCommandsPub.publish(msg)
+
+
 def listener():
-    global robotCommandPub, mainStatusPub, newOrder, completeOrder, feederCheck
+    global robotCommandPub, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
+    oeeCommandsPub = rospy.Publisher("packml_node/packml/oee_commands", String, queue_size=10)
 
     rospy.init_node('main_control', anonymous=True)
     

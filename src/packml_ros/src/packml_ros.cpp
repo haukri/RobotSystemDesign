@@ -34,6 +34,7 @@ PackmlRos::PackmlRos(ros::NodeHandle nh, ros::NodeHandle pn, std::shared_ptr<pac
   trans_server_ = packml_node.advertiseService("transition", &PackmlRos::transRequest, this);
   reset_stats_server_ = packml_node.advertiseService("reset_stats", &PackmlRos::resetStats, this);
   get_stats_server_ = packml_node.advertiseService("get_stats", &PackmlRos::getStats, this);
+  oee_subscriber_ = packml_node.subscribe("oee_commands", 1000, &PackmlRos::oeeCommands, this);
 
   status_msg_ = packml_msgs::initStatus(pn.getNamespace());
 
@@ -217,5 +218,15 @@ bool PackmlRos::resetStats(packml_msgs::ResetStats::Request& req, packml_msgs::R
   sm_->resetStats();
 
   return true;
+}
+
+void PackmlRos::oeeCommands(const std_msgs::String::ConstPtr& msg)
+{
+  if(msg->data == "bad-brick") {
+    sm_->incrementFailureCount();
+  }
+  else if(msg->data == "good-brick") {
+    sm_->incrementSuccessCount();
+  }
 }
 }  // namespace kitsune_robot

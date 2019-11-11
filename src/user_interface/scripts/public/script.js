@@ -50,7 +50,7 @@ $(document).ready(function() {
             percent: msg.stats.quality * 100
         });
         $('#performance-progress').progress({
-            percent: msg.stats.performance * 100
+            percent: msg.stats.performance * 100 > 100 ? 100 : msg.stats.performance * 100
         });
         $('#oee-progress').progress({
             percent: msg.stats.overall_equipment_effectiveness * 100
