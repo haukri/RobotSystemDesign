@@ -18,6 +18,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "image_converter");
   //VideoCapture cap(argc > 1 ? atoi(argv[1]) : 0);
 
+  namedWindow("WholeImage");
   namedWindow(window_capture_name);
   namedWindow(window_detection_name);
   Mat frame, frame_HSV, frame_threshold;
@@ -29,11 +30,12 @@ int main(int argc, char** argv)
       cap = imread("/home/lasse/Desktop/correctPos.png", CV_LOAD_IMAGE_COLOR);
     }
     if (i==1) {
-      cap = imread("/home/lasse/Desktop/image.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/correctPosCropped.png", CV_LOAD_IMAGE_COLOR);
     }
     if (i==2) {
-      cap = imread("/home/lasse/Desktop/imageBlue.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/croppedBlue.png", CV_LOAD_IMAGE_COLOR);
     }
+    imshow("WholeImage", cap);
     for (size_t j = 0; j < 3; j++) {
       Mat croppedImg;
       //YELLOW

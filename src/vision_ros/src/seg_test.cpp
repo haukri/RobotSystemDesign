@@ -65,28 +65,28 @@ int main(int argc, char** argv)
   Mat cap;
   for (size_t i = 0; i < 3; i++) {
     if (i==0) {
-      cap = imread("/home/lasse/Desktop/imageRight.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/correctPos.png", CV_LOAD_IMAGE_COLOR);
     }
     if (i==1) {
-      cap = imread("/home/lasse/Desktop/imageWrong.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/image.png", CV_LOAD_IMAGE_COLOR);
     }
     if (i==2) {
-      cap = imread("/home/lasse/Desktop/imageWrong2.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/imageBlue.png", CV_LOAD_IMAGE_COLOR);
     }
     for (size_t j = 0; j < 3; j++) {
       Mat croppedImg;
       if (j==0) {
-        int startX=210, startY=0, width=250, height=cap.size().height;
+        int startX=700, startY=0, width=300, height=cap.size().height;
         Mat ROI(cap, Rect(startX,startY,width,height));
         ROI.copyTo(croppedImg);
       }
       if (j==1) {
-        int startX=425, startY=0, width=250, height=cap.size().height;
+        int startX=400, startY=0, width=300, height=cap.size().height;
         Mat ROI(cap, Rect(startX,startY,width,height));
         ROI.copyTo(croppedImg);
       }
       if (j==2) {
-        int startX=640, startY=0, width=250, height=cap.size().height;
+        int startX=100, startY=0, width=300, height=cap.size().height;
         Mat ROI(cap, Rect(startX,startY,width,height));
         ROI.copyTo(croppedImg);
       }
