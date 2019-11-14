@@ -52,8 +52,6 @@ std::vector<double> jointq_pick_yellow_over = {-1.55849, -2.1221, -2.53371, 0.65
 std::vector<double> jointq_pick_midpoint = {-1.30838, -1.17342, -2.32572, -1.19639, 1.57305, 0.623872};
 std::vector<double> jointq_feeder_midpoint = {-1.79356, -1.6487, -2.31727, -0.704819, 1.58955, 0.122001};
 
-
-
 std::vector<double> jointq_bin1 = {-1.07664, -1.76487, -2.18062, -0.736245, 1.59791, -0.683229};
 std::vector<double> jointq_bin2 = {-0.907774, -1.6287, -2.34551, -0.703142, 1.59225, -0.514205};
 std::vector<double> jointq_bin3 = {-1.27674, -1.62441, -2.34612, -0.717447, 1.60367, -0.883123};
@@ -76,6 +74,16 @@ std::vector<double> jointq_pick_bins_34_over = {-1.15169, -1.63318, -2.40567, -0
 
 std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
 std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
+
+std::vector<double> jointq_mir_bins_12 = {};
+std::vector<double> jointq_mir_bins_12_over = {};
+
+std::vector<double> jointq_mir_bins_34 = {};
+std::vector<double> jointq_mir_bins_34_over = {};
+
+std::vector<double> jointq_mir_camera = {};
+
+
 
 std::vector<double> getBinJointQ(int binNumber) {
   switch(binNumber) {
@@ -111,14 +119,25 @@ vector<vector<double>> generatePath(string brick, int binNumber) {
   }
 }
 
-void move(vector<double> jointq, double velocity, double acceleration) {
+void moveJ(vector<double> jointq, double velocity, double acceleration) {
   rtde_control->moveJ(jointq, velocity, acceleration);
   waitForRobot();
   if(robotPaused) {
     ROS_INFO("Robot paused, waiting to start again");
     while(robotPaused){ }
     ROS_INFO("Robot starting");
-    move(jointq, velocity, acceleration);
+    moveJ(jointq, velocity, acceleration);
+  }
+}
+
+void moveL(vector<double> pose, double velocity, double acceleration) {
+  rtde_control->moveL(pose, velocity, acceleration);
+  waitForRobot();
+  if(robotPaused) {
+    ROS_INFO("Robot paused, waiting to start again");
+    while(robotPaused){ }
+    ROS_INFO("Robot starting");
+    moveL(pose, velocity, acceleration);
   }
 }
 
@@ -129,25 +148,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_blue_over, velocity_high, acceleration);
+    moveJ(jointq_pick_blue_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_blue, velocity_low, acceleration);
+    moveJ(jointq_pick_blue, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_blue_over, velocity_low, acceleration);
+    moveJ(jointq_pick_blue_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -162,25 +181,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_red_over, velocity_high, acceleration);
+    moveJ(jointq_pick_red_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_red, velocity_low, acceleration);
+    moveJ(jointq_pick_red, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_red_over, velocity_low, acceleration);
+    moveJ(jointq_pick_red_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -195,25 +214,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_yellow_over, velocity_high, acceleration);
+    moveJ(jointq_pick_yellow_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_yellow, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_yellow_over, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -225,10 +244,10 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
   }
     else if(cmd->command == "verify-bricks") {
     ROS_INFO("Verifying Bricks");
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(joint_verify_feeder, velocity_high, acceleration);
+    moveJ(joint_verify_feeder, velocity_high, acceleration);
     if(robotStopped)
       return;
     robot_msgs::RobotStatus status;
@@ -240,25 +259,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_yellow_over, velocity_high, acceleration);
+    moveJ(jointq_pick_yellow_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_yellow, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_yellow_over, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -273,25 +292,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_blue_over, velocity_high, acceleration);
+    moveJ(jointq_pick_blue_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_blue, velocity_low, acceleration);
+    moveJ(jointq_pick_blue, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_blue_over, velocity_low, acceleration);
+    moveJ(jointq_pick_blue_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -306,25 +325,25 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_red_over, velocity_high, acceleration);
+    moveJ(jointq_pick_red_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_red, velocity_low, acceleration);
+    moveJ(jointq_pick_red, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_red_over, velocity_low, acceleration);
+    moveJ(jointq_pick_red_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, velocity_high, acceleration);
     if(robotStopped)
       return;
     
@@ -334,63 +353,63 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
-  else if(cmd->command == "dropoff-boxes") {
-    ROS_INFO("Dropping off boxes");
+  else if(cmd->command == "move-boxes-waiting") {
+    ROS_INFO("Moving boxes to waiting zone");
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_12, velocity_low, acceleration);
+    moveJ(jointq_pick_bins_12, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_bins_12_over, velocity_low, acceleration);
+    moveJ(jointq_pick_bins_12_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_bins_12_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_12, velocity_low, acceleration);
+    moveJ(jointq_dropoff_bins_12, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    move(jointq_dropoff_bins_12_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_bins_12_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_34_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_34, velocity_low, acceleration);
+    moveJ(jointq_pick_bins_34, velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
     
-    move(jointq_pick_bins_34_over, velocity_low, acceleration);
+    moveJ(jointq_pick_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_34_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_bins_34_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_34, velocity_high, acceleration);
+    moveJ(jointq_dropoff_bins_34, velocity_high, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    move(jointq_dropoff_bins_34_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
 
@@ -398,34 +417,73 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
-
-  else if(cmd->command == "dropoff-test") {
-    ROS_INFO("Dropping off boxes");
-    
+  else if(cmd->command == "move-boxes-to-mir") {
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_bins_12_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    move(jointq_pick_bins_12, velocity_low, acceleration);
+    moveJ(jointq_dropoff_bins_12, velocity_low, acceleration);
     if(robotStopped)
       return;
-    
+
     io_interface->setStandardDigitalOut(4, 0);
+
+    moveJ(jointq_dropoff_bins_12_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
     
-    move(jointq_pick_bins_12_over, velocity_low, acceleration);
+    io_interface->setStandardDigitalOut(4, 1);
+
+    moveJ(jointq_mir_bins_12_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_bins_34_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;  
+    moveJ(jointq_dropoff_bins_34, velocity_low, acceleration);
     if(robotStopped)
       return;
-    move(jointq_dropoff_bins_12, velocity_low, acceleration);
+
+    io_interface->setStandardDigitalOut(4, 0);
+
+    moveJ(jointq_dropoff_bins_34_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_bins_34_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_bins_34, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+
+    moveJ(jointq_mir_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
   }
+  else if(cmd->command == "camera-over-mir") {
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_camera, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+  }
+  else if (cmd->command == "move-boxes-from-mir") {
+    io_interface->setStandardDigitalOut(4, 1);
+  }
+
 }
 
 void stopCallback(const packml_msgs::Status::ConstPtr& msg)

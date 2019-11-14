@@ -511,7 +511,7 @@ bool RTDEControlInterface::moveL(const std::vector<double> &transform, double sp
   robot_cmd.val_ = transform;
   robot_cmd.val_.push_back(speed);
   robot_cmd.val_.push_back(acceleration);
-  return sendCommand(robot_cmd);
+  return sendCommandAsync(robot_cmd);
 }
 
 bool RTDEControlInterface::moveL_FK(const std::vector<double> &q, double speed, double acceleration)
