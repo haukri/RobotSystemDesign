@@ -82,7 +82,7 @@ def check_image(image):
     upper = np.array([H_max,S_max,V_max])
     image_seg = cv.inRange(image_hsv, lower, upper)
     count = cv.countNonZero(image_seg)
-    if count > 15000:
+    if count > 14000:
         result_r = True
 
 
@@ -99,8 +99,25 @@ def check_image(image):
     if count > 7500:
         result_b = True
 
+    H_min = 0
+    S_min = 0
+    V_min = 0
+    H_max = 180
+    S_max = 130
+    V_max = 255
+    image_hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+    lower = np.array([H_min,S_min,V_min])
+    upper = np.array([H_max,S_max,V_max])
+    image_seg = cv.inRange(image_hsv, lower, upper)
+    for i in range(3):
+        x = pos_x[i]
+        y = pos_y[i]
+        if image_seg[y, x] == 255:
+            missing = True
 
-    return result_y, result_r, result_b
+
+
+    return result_y, result_r, result_b, missing
 
 
 # --------------------------------------------------------------------------- #
@@ -114,26 +131,27 @@ def updating_writer(a):
 
     :param arguments: The input arguments to the call
     """
-    log.debug("updating the context")
+    #log.debug("updating the context")
     now = time.time()
     context = a
     register = 1
     slave_id = 0x00
-    address1 = 0
-    address2 = 1
-    address3 = 2
-    values = context[slave_id].getValues(register, address3, count=1)
+    address_yellow = 0
+    address_red = 1
+    address_blue = 2
+    address_missing = 3
 
     rawCapture = PiRGBArray(camera)
     camera.capture(rawCapture, format="bgr")
     image = rawCapture.array
 
-    result_y, result_r, result_b = check_image(image)
-    log.debug("new values: " + str(result_y) + " " + str(result_r) + " " + str(result_b))
-    log.debug("Time for update: " + str(time.time()-now))
-    context[slave_id].setValues(register, address1, [result_y])
-    context[slave_id].setValues(register, address2, [result_r])
-    context[slave_id].setValues(register, address3, [result_b])
+    result_y, result_r, result_b, missing = check_image(image)
+    #log.debug("new values: " + str(result_y) + " " + str(result_r) + " " + str(result_b))
+    #log.debug("Time for update: " + str(time.time()-now))
+    context[slave_id].setValues(register, address_yellow, [result_y])
+    context[slave_id].setValues(register, address_red, [result_r])
+    context[slave_id].setValues(register, address_blue, [result_b])
+    context[slave_id].setValues(register, address_missing, [missing])
 
 
 def run_updating_server():
@@ -159,7 +177,7 @@ def run_updating_server():
     # ----------------------------------------------------------------------- #
     # run the server you want
     # ----------------------------------------------------------------------- #
-    time = 0.5  # 5 seconds delay
+    time = 0.2  # 0.2 seconds delay
     loop = LoopingCall(f=updating_writer, a=context)
     loop.start(time, now=False) # initially delay by time
     StartTcpServer(context, identity=identity, address=("192.168.1.202", 5020))
