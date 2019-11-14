@@ -34,6 +34,10 @@ message = ""
 lastMessage = ""
 goodOrder = True
 
+feederYellowAmount = 13
+feederRedAmount = 19
+feederBlueAmount = 37
+
 STOPPED = 2
 STARTING = 3
 IDLE = 4
@@ -130,7 +134,8 @@ def publisher():
                 if(not loadOrder()):
                     message = "No saved order found"
                     substate = 5
-                substate = 10
+                else:
+                    substate = 10
             elif substate == 5:
                 message = "5: New order"
                 currentOrder = newOrder()
@@ -163,7 +168,7 @@ def publisher():
             elif substate == 11:            # Discard all bricks that are not valid
                 if robotReady:
                     # Call verify brick service
-                    rospy.sleep(0.5)
+                    # rospy.sleep(0.5)
                     bricksValid = feederCheck()
                     hasDiscardedBricks = False
                     substate = 12
@@ -275,11 +280,11 @@ def listener():
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')
-    # rospy.wait_for_service('feeder_check')
+    rospy.wait_for_service('feeder_check')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
-    # feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
+    feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
 
     thread = threading.Thread(target=publisher)
     thread.start()

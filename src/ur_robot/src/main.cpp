@@ -31,9 +31,9 @@ ros::Publisher robot_status_pub;
 
 // Data to be sent
 double velocity = 0.8;
-double velocity_high = 2;
+double velocity_high = 3;
 double velocity_low = 0.8;
-double acceleration = 0.8;
+double acceleration = 2;
 
 bool robotStopped = false;
 bool robotPaused = false;
@@ -50,11 +50,14 @@ std::vector<double> jointq_pick_yellow = {-1.59469, -2.24166, -2.39459, 0.608003
 std::vector<double> jointq_pick_yellow_over = {-1.55849, -2.1221, -2.53371, 0.652527, 1.30927, 0.291958};
 
 std::vector<double> jointq_pick_midpoint = {-1.30838, -1.17342, -2.32572, -1.19639, 1.57305, 0.623872};
+std::vector<double> jointq_feeder_midpoint = {-1.79356, -1.6487, -2.31727, -0.704819, 1.58955, 0.122001};
 
-std::vector<double> jointq_bin1 = {-1.01448, -1.72352, -2.21327, -0.788078, 1.56507, -0.655195};
-std::vector<double> jointq_bin2 = {-0.833121, -1.59163, -2.36416, -0.766303, 1.55147, -0.473551};
-std::vector<double> jointq_bin3 = {-1.22998, -1.56485, -2.39417, -0.755475, 1.54941, -0.870467};
-std::vector<double> jointq_bin4 = {-1.06105, -1.33726, -2.57864, -0.801904, 1.55033, -0.701143};
+
+
+std::vector<double> jointq_bin1 = {-1.07664, -1.76487, -2.18062, -0.736245, 1.59791, -0.683229};
+std::vector<double> jointq_bin2 = {-0.907774, -1.6287, -2.34551, -0.703142, 1.59225, -0.514205};
+std::vector<double> jointq_bin3 = {-1.27674, -1.62441, -2.34612, -0.717447, 1.60367, -0.883123};
+std::vector<double> jointq_bin4 = {-1.14082, -1.44034, -2.52074, -0.72255, 1.6001, -0.746855};
 
 std::vector<double> joint_q1 = {-1.12738, -1.59118, -2.1059, -0.96981, 1.59176, 0.032187};
 std::vector<double> joint_q2 = {-1.82089, -2.04634, -1.22491, -1.11367, 1.59176, 0.0321989};
@@ -65,7 +68,7 @@ std::vector<double> jointq_discard_bin = {-2.17897, -1.86781, -2.01717, -0.82959
 std::vector<double> jointq_pick_bins_12 = {-0.959291, -1.84798, -2.24979, -0.642775, 1.56402, -0.565669};
 std::vector<double> jointq_pick_bins_12_over = {-0.959411, -1.76864, -2.22276, -0.749148, 1.5644, -0.565538};
 
-std::vector<double> jointq_dropoff_bins_12 = {0.112473, -1.6066, -2.53273, -0.591482, 1.58511, -1.11164};
+std::vector<double> jointq_dropoff_bins_12 = {0.112281, -1.6495, -2.54432, -0.536036, 1.58595, -1.0534};
 std::vector<double> jointq_dropoff_bins_12_over = {0.112257, -1.48768, -2.48922, -0.753941, 1.58568, -1.11153};
 
 std::vector<double> jointq_pick_bins_34 = {-1.15152, -1.70928, -2.43062, -0.599233, 1.55877, -0.757671};
@@ -126,7 +129,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_blue_over, velocity_high, acceleration);
@@ -159,7 +162,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_red_over, velocity_high, acceleration);
@@ -192,7 +195,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_yellow_over, velocity_high, acceleration);
@@ -237,7 +240,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_yellow_over, velocity_high, acceleration);
@@ -270,7 +273,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_blue_over, velocity_high, acceleration);
@@ -303,7 +306,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    move(jointq_pick_midpoint, velocity_high, acceleration);
+    move(jointq_feeder_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
     move(jointq_pick_red_over, velocity_high, acceleration);
@@ -394,6 +397,34 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     robot_msgs::RobotStatus status;
     status.ready = true;
     robot_status_pub.publish(status);
+  }
+
+  else if(cmd->command == "dropoff-test") {
+    ROS_INFO("Dropping off boxes");
+    
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    move(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_pick_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 0);
+    
+    move(jointq_pick_bins_12_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    move(jointq_dropoff_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
   }
 }
 
