@@ -177,7 +177,6 @@ def publisher():
                     bricksValid.red = True
                     currentRobotCmd = RobotCmd()
                     currentRobotCmd.command = 'discard-red'
-                    currentRobotCmd.binNumber = 0
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
                     substate = 18
@@ -185,7 +184,6 @@ def publisher():
                     bricksValid.blue = True
                     currentRobotCmd = RobotCmd()
                     currentRobotCmd.command = 'discard-blue'
-                    currentRobotCmd.binNumber = 0
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
                     substate = 18
@@ -193,7 +191,6 @@ def publisher():
                     bricksValid.yellow = True
                     currentRobotCmd = RobotCmd()
                     currentRobotCmd.command = 'discard-yellow'
-                    currentRobotCmd.binNumber = 0
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
                     substate = 18
@@ -207,36 +204,73 @@ def publisher():
                     goodOrder = False
                     hasDiscardedBricks = True
                     substate = 12     
-            elif substate == 19:
-                # Get next brick and make message
+            elif substate == 19:            # Get next brick and make message
+                message = "19: Packing brick"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = getNextBrick()
                 currentRobotCmd.binNumber = binNumber
                 robotCommandPub.publish(currentRobotCmd)
-                message = "19: Packing brick"
                 robotReady = False
                 substate = 20
             elif substate == 20:            # Wait for robot to complete move
                 if robotReady:
                     message = "20: Packing brick done"
                     substate = 10
-            elif substate == 30:            # Call MiR robot for pickup
-                message = "30: Call MiR robot for pickup"
+            elif substate == 25:            # Moving boxes to waiting zone
+                message = "25: Moving boxes to waiting zone"
                 currentRobotCmd = RobotCmd()
-                currentRobotCmd.command = 'dropoff-boxes'
-                currentRobotCmd.binNumber = 0
+                currentRobotCmd.command = 'move-boxes-waiting'
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
+                substate = 26
+            elif substate == 26:            # Wait for robot finishing moving boxes to waiting zone
+                if robotReady:
+                    substate = 30
+            elif substate == 30:            # Call MiR robot for pickup
+                message = "30: Call MiR robot for pickup"
                 substate = 40
             elif substate == 40:            
                 message = "40: Wait for MiR to arrive"
-                if robotReady:
-                    substate = 50
+                substate = 50
             elif substate == 50:            
-                message = "50: Transfer boxes over to MiR"
+                message = "50: Find box position offset on MiR"
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = 'camera-over-mir'
+                robotCommandPub.publish(currentRobotCmd)
+                robotReady = False
                 substate = 60
             elif substate == 60:            
-                message = "60: Wait for transfer done"
+                if robotReady:
+                    substate = 70
+            elif substate == 70:
+                message = "70: Request position offsets from camera"
+                substate = 80
+            elif substate == 80:
+                message = "80: Move empty boxes from MiR to table"
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = 'move-boxes-from-mir'
+                currentRobotCmd.x_offset = 1.0 # TODO add offsets from camera
+                currentRobotCmd.y_offset = 1.0 # TODO add offsets from camera
+                robotCommandPub.publish(currentRobotCmd)
+                robotReady = False
+                substate = 95
+            elif substate == 95:
+                if robotReady:
+                    substate = 100
+            elif substate == 100:
+                message = "100: Move boxes from waiting zone to MiR"
+                currentRobotCmd = RobotCmd()
+                currentRobotCmd.command = 'move-boxes-to-mir'
+                currentRobotCmd.x_offset = 1.0 # TODO add offsets from camera
+                currentRobotCmd.y_offset = 1.0 # TODO add offsets from camera
+                robotCommandPub.publish(currentRobotCmd)
+                robotReady = False
+                substate = 105
+            elif substate == 105:
+                if robotReady:
+                    substate = 110
+            elif substate == 110:
+                message = "100: Request MiR to go away"
                 substate = 5
         elif packmlState == STARTING:
             if substate < 30:
