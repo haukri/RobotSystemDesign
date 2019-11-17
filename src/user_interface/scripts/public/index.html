@@ -86,16 +86,17 @@
                 </div>
                 <div class="column">
                     <h1>Current Order</h1>
-                    <a class="ui massive teal label brick-count-label"><i class="clipboard list icon"></i>Order Number</a>
+                    <a class="ui massive teal label brick-count-label"><i class="clipboard list icon"></i>Order
+                        Number</a>
                     <a id="order-number" class="ui massive gray label brick-count">0</a>
                     <br>
                     <br>
                     <a class="ui massive blue label brick-count-label">Blue Bricks</a>
-                    <a id="blue-brick"class="ui massive gray label brick-count">0</a>
+                    <a id="blue-brick" class="ui massive gray label brick-count">0</a>
                     <br>
                     <br>
                     <a class="ui massive red label brick-count-label">Red Bricks</a>
-                    <a id="red-brick"class="ui massive gray label brick-count">0</a>
+                    <a id="red-brick" class="ui massive gray label brick-count">0</a>
                     <br>
                     <br>
                     <a class="ui massive yellow label brick-count-label">Yellow Bricks</a>
@@ -132,6 +133,23 @@
         </div>
         <div class="four wide red column" onclick="packmlCommand('abort')">
             <h1 class="command-button">Abort</h1>
+        </div>
+    </div>
+
+    <div class="ui modal">
+        <div class="header">
+            <h1>Feeder is empty!</h1>
+        </div>
+        <div class="image content">
+            <div class="ui large image">
+                <img src="feeder.png">
+            </div>
+            <div class="description">
+                <div class="ui header">Please fill the feeder with bricks and then press Feeder is full</div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui approve green huge button">Feeder is full</div>
         </div>
     </div>
 

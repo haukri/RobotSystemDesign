@@ -6,13 +6,16 @@ from order_msgs.srv import NewOrder, CompleteOrder
 from std_msgs.msg import String
 from pymodbus_client.srv import feeder_srv
 from packml_msgs.msg import Status
+from packml_msgs.srv import Transition
 import threading
 import json
 from Queue import Queue
+from notification import sendPushNotification
 
 robotCommandPub = 0
 mainStatusPub = 0
 oeeCommandsPub = 0
+feederEmptyPub = 0
 packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
@@ -33,10 +36,16 @@ bricksVerified.yellow = False
 message = ""
 lastMessage = ""
 goodOrder = True
+packmlTransitionCommand = 0
 
-feederYellowAmount = 13
-feederRedAmount = 19
-feederBlueAmount = 37
+feederStatus = type('', (), {})()
+feederStatus.max_yellow_amount = 13
+feederStatus.max_red_amount = 19
+feederStatus.max_blue_amount = 37
+feederStatus.yellow_amount = 13
+feederStatus.red_amount = 19
+feederStatus.blue_amount = 37
+feederStatus.empty = False
 
 STOPPED = 2
 STARTING = 3
@@ -69,16 +78,26 @@ def robot_callback(data):
     robotReady = data.ready
 
 
+def feeder_callback(data):
+    global feederStatus
+    feederStatus.empty = False
+
+
 def getNextBrick():
+    global feederStatus
     if currentOrder.blue_amount > 0:
         currentOrder.blue_amount = currentOrder.blue_amount - 1
+        feederStatus.blue_amount = feederStatus.blue_amount - 1
         return "pick-blue"
     elif currentOrder.red_amount > 0:
         currentOrder.red_amount = currentOrder.red_amount - 1
+        feederStatus.red_amount = feederStatus.red_amount - 1
         return "pick-red"
     elif currentOrder.yellow_amount > 0:
         currentOrder.yellow_amount = currentOrder.yellow_amount - 1
+        feederStatus.yellow_amount = feederStatus.yellow_amount - 1
         return "pick-yellow"
+    saveOrder()
 
 
 def orderDone():
@@ -123,11 +142,14 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, message, goodOrder, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
+            substate = 0
+            print('PackML state changed!')
+
         if packmlState == EXECUTE:
             if substate == 0:                # Get new order
                 message = "0: load order"
@@ -144,13 +166,21 @@ def publisher():
                 substate = 10
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
-                    currentRobotCmd = RobotCmd()
-                    currentRobotCmd.command = 'verify-bricks'
-                    currentRobotCmd.binNumber = 1
-                    robotCommandPub.publish(currentRobotCmd)
-                    message = "10: Verifying bricks"
-                    robotReady = False
-                    substate = 11
+                    if feederIsEmpty():
+                        suspendMachine()
+                        msg = String()
+                        feederEmptyPub.publish(msg)
+                        feederStatus.empty = True
+                        sendPushNotification('Feeder is empty! please refill the feeder')
+                        substate = 13
+                    else:
+                        currentRobotCmd = RobotCmd()
+                        currentRobotCmd.command = 'verify-bricks'
+                        currentRobotCmd.binNumber = 1
+                        robotCommandPub.publish(currentRobotCmd)
+                        message = "10: Verifying bricks"
+                        robotReady = False
+                        substate = 11
                 else:
                     message = "10: Order done"
                     substate = 5
@@ -179,6 +209,7 @@ def publisher():
                     currentRobotCmd.command = 'discard-red'
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
+                    feederStatus.red_amount = feederStatus.red_amount - 1
                     substate = 18
                 elif not bricksValid.blue:
                     bricksValid.blue = True
@@ -186,6 +217,7 @@ def publisher():
                     currentRobotCmd.command = 'discard-blue'
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
+                    feederStatus.blue_amount = feederStatus.blue_amount - 1
                     substate = 18
                 elif not bricksValid.yellow:
                     bricksValid.yellow = True
@@ -193,12 +225,15 @@ def publisher():
                     currentRobotCmd.command = 'discard-yellow'
                     robotCommandPub.publish(currentRobotCmd)
                     robotReady = False
+                    feederStatus.yellow_amount = feederStatus.yellow_amount - 1
                     substate = 18
                 else:
                     if hasDiscardedBricks:
                         substate = 10
                     else:
                         substate = 19
+            elif substate == 13:
+                message = "13: Feeder is empty, waiting for state suspended"
             elif substate == 18:            # Wait for robot to finish executing discard move
                 if robotReady:
                     goodOrder = False
@@ -272,11 +307,33 @@ def publisher():
             elif substate == 110:
                 message = "100: Request MiR to go away"
                 substate = 5
-        elif packmlState == STARTING:
-            if substate < 30:
-                substate = 0
+
+        elif packmlState == SUSPENDED:
+            if substate == 0:
+                message = "0: Waiting for feeder to be full"
+                if not feederStatus.empty:
+                    feederStatus.blue_amount = feederStatus.max_blue_amount
+                    feederStatus.red_amount = feederStatus.max_red_amount
+                    feederStatus.yellow_amount = feederStatus.max_yellow_amount
+                    substate = 10
+                    unsuspendMachine()
+            elif substate == 10:
+                message = "10: Waiting for transition to state execute"
+
         publishStatus()
         r.sleep()
+
+
+def suspendMachine():
+    packmlTransitionCommand(100)
+
+
+def unsuspendMachine():
+    packmlTransitionCommand(101)
+
+
+def feederIsEmpty():
+    return feederStatus.blue_amount <= 5 or feederStatus.red_amount <= 4 or feederStatus.yellow_amount <= 3
 
 
 def publishStatus():
@@ -303,22 +360,27 @@ def publishGoodOrder():
 
 def listener():
     global robotCommandPub, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
     oeeCommandsPub = rospy.Publisher("packml_node/packml/oee_commands", String, queue_size=10)
+    feederEmptyPub = rospy.Publisher("feeder_empty", String, queue_size=10)
 
     rospy.init_node('main_control', anonymous=True)
     
     rospy.Subscriber("packml_node/packml/status", Status, packml_callback)
     rospy.Subscriber("robot_command_status", RobotStatus, robot_callback)
+    rospy.Subscriber("feeder_full", RobotStatus, feeder_callback)
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')
     rospy.wait_for_service('feeder_check')
+    rospy.wait_for_service('packml_node/packml/transition')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
     feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
+    packmlTransitionCommand = rospy.ServiceProxy('packml_node/packml/transition', Transition)
 
     thread = threading.Thread(target=publisher)
     thread.start()

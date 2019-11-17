@@ -46,3 +46,12 @@
     left: 25%;
     margin: 0 !important;
 }
+
+.menu .item {
+    font-size: 20px !important;
+    font-weight: bold !important;
+}
+
+.menu .item.active {
+    color:  rgb(35, 138, 202) !important;
+}
