@@ -46,6 +46,7 @@ if(${CODE})
 	find_package(Threads)
 
 	if(${PYTHON_BINDINGS})
+		set(pybind11_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 		find_package(pybind11 REQUIRED)
 	endif()
 endif()
@@ -54,6 +55,7 @@ set(LIB_SOURCE_FILES
 		src/robot_state.cpp
         src/rtde.cpp
         src/dashboard_client.cpp
+        src/dashboard_enums.cpp
         src/script_client.cpp
         src/rtde_control_interface.cpp
 		src/rtde_receive_interface.cpp
@@ -62,7 +64,8 @@ set(LIB_SOURCE_FILES
 set(LIB_HEADER_FILES
         include/ur_rtde/rtde.h
         include/ur_rtde/rtde_utility.h
-        include/ur_rtde/dashboard_client.h
+		include/ur_rtde/dashboard_client.h
+		include/ur_rtde/dashboard_enums.h
         include/ur_rtde/robot_state.h
         include/ur_rtde/script_client.h
         include/ur_rtde/rtde_control_interface.h
@@ -110,7 +113,7 @@ if(${CODE})
 				PRIVATE ${pybind11_INCLUDE_DIR}  # from pybind11Config
 				PRIVATE ${PYTHON_INCLUDE_DIRS})
 		target_link_libraries(rtde_control PRIVATE
-				${PYTHON_LIBRARIES}
+				#${PYTHON_LIBRARIES}
 				${Boost_SYSTEM_LIBRARY}
 				${Boost_THREAD_LIBRARY}
 				${CMAKE_THREAD_LIBS_INIT})
@@ -126,7 +129,7 @@ if(${CODE})
 			PRIVATE ${pybind11_INCLUDE_DIR}  # from pybind11Config
 			PRIVATE ${PYTHON_INCLUDE_DIRS})
 		target_link_libraries(rtde_receive PRIVATE
-				${PYTHON_LIBRARIES}
+				#${PYTHON_LIBRARIES}
 				${Boost_SYSTEM_LIBRARY}
 				${Boost_THREAD_LIBRARY})
                 target_compile_definitions(rtde_receive PRIVATE rtde_EXPORTS)
@@ -141,7 +144,7 @@ if(${CODE})
 				PRIVATE ${pybind11_INCLUDE_DIR}  # from pybind11Config
 				PRIVATE ${PYTHON_INCLUDE_DIRS})
 		target_link_libraries(rtde_io PRIVATE
-				${PYTHON_LIBRARIES}
+				#${PYTHON_LIBRARIES}
 				${Boost_SYSTEM_LIBRARY}
 				${Boost_THREAD_LIBRARY})
 		target_compile_definitions(rtde_io PRIVATE rtde_EXPORTS)
@@ -174,7 +177,7 @@ if(${CODE})
 			${Boost_SYSTEM_LIBRARY}
 			${Boost_THREAD_LIBRARY})
 
-	generate_export_header(rtde)
+	generate_export_header(rtde EXPORT_FILE_NAME ${CMAKE_BINARY_DIR}/ur_rtde/rtde_export.h)
 
 	add_library(ur_rtde::rtde ALIAS rtde)
 	add_executable(ur_rtde::rtde_receive_client ALIAS rtde_receive_client)
@@ -213,7 +216,7 @@ if(${CODE})
 	install(
 			FILES
 			${LIB_HEADER_FILES}
-			"${CMAKE_CURRENT_BINARY_DIR}/rtde_export.h"
+			"${CMAKE_CURRENT_BINARY_DIR}/ur_rtde/rtde_export.h"
 			DESTINATION ${INCLUDE_INSTALL_DIR}
 			COMPONENT ur_rtde
 	)

@@ -28,7 +28,12 @@ var io = require('socket.io')(http);
 const GetStats = rosnodejs.require('packml_msgs').srv.GetStats;
 const Transition = rosnodejs.require('packml_msgs').srv.Transition;
 
+var feederPub;
+
 var packMLStatus = {}
+var orderStatus;
+var mainControlStatus;
+var feederEmpty = false;
 var packMLTransitionService;
 
 function userInterface() {
@@ -36,64 +41,82 @@ function userInterface() {
   // Register node with ROS master
   rosnodejs.initNode('/user_interface_node')
     .then((rosNode) => {
-        io.on('connection', function (socket) {
+      io.on('connection', function (socket) {
         console.log('a user connected');
-        if(packMLStatus) {
+        if (packMLStatus) {
           io.sockets.emit('packml_status', packMLStatus);
         }
+        if (orderStatus) {
+          io.sockets.emit('order_status', orderStatus);
+        }
+        if (mainControlStatus) {
+          io.sockets.emit('main_control_status', mainControlStatus);
+        }
+        io.sockets.emit('feeder_empty', feederEmpty);
+
         socket.on('packml_command', message => {
-            const request = new Transition.Request();
-            if (message.command == "start")
-            {
-                if (packMLStatus.state.val == 2){
-                    request.command = 6;
-                    console.log('test of reset request')
-                }
-
-                //packMLTransitionService.call(request);
-                //console.log(packMLStatus.state.val)
-                else{
-                    request.command = 2;
-                    console.log('test else statement')
-                }
-
+          const request = new Transition.Request();
+          if (message.command == "start") {
+            if (packMLStatus.state.val == 2) {
+              request.command = 6;
+              console.log('test of reset request')
             }
-            else if (message.command == "hold")
-            {
-                if (packMLStatus.state.val == 11) {
-                    request.command = 102;
-                }
-                else{
-                    request.command = 4;
-                }
-
+            else {
+              request.command = 2;
+              console.log('test else statement')
             }
-            else if (message.command == "stop")
-            {
-                if (packMLStatus.state.val == 9)
-                {
-                    request.command = 1;
-                }
-                else
-                {
-                    request.command = 3;
-                }
-
+          }
+          else if (message.command == "hold") {
+            if (packMLStatus.state.val == 11) {
+              request.command = 102;
             }
-            else if (message.command == "abort")
-            {
-                request.command = 5;
+            else {
+              request.command = 4;
             }
-            packMLTransitionService.call(request).then((resp) => {
+          }
+          else if (message.command == "stop") {
+            if (packMLStatus.state.val == 9) {
+              request.command = 1;
+            }
+            else {
+              request.command = 3;
+            }
+          }
+          else if (message.command == "abort") {
+            request.command = 5;
+          }
+          packMLTransitionService.call(request).then((resp) => {
             console.log('packML Transition state successfull')
-            })
+          })
         });
 
-        });
+        socket.on('feeder_full', message => {
+          feederEmpty = false;
+          feederPub.publish({ data: "" });
+        })
+
+      });
       const subStatus = rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
         packMLStatus = msg;
         io.sockets.emit('packml_status', packMLStatus);
       });
+
+      const orderStatusSub = rosNode.subscribe('/order_status', 'order_msgs/OrderStatus', (msg) => {
+        orderStatus = msg;
+        io.sockets.emit('order_status', orderStatus);
+      });
+
+      const mainControlStatusSub = rosNode.subscribe('/main_control_status', 'std_msgs/String', (msg) => {
+        mainControlStatus = msg;
+        io.sockets.emit('main_control_status', mainControlStatus);
+      });
+
+      const feederEmptySub = rosNode.subscribe('/feeder_empty', 'std_msgs/String', (msg) => {
+        feederEmpty = true;
+        io.sockets.emit('feeder_empty', feederEmpty);
+      });
+
+      feederPub = rosNode.advertise('/feeder_full', 'std_msgs/String');
 
       let serviceClient = rosNode.serviceClient('/packml_node/packml/get_stats', 'packml_msgs/GetStats', { persist: true });
       rosNode.waitForService(serviceClient.getService(), 2000)
@@ -123,7 +146,7 @@ if (require.main === module) {
 
 
 
-    http.listen(3000, function () {
+  http.listen(3000, function () {
     console.log('listening on *:3000');
   });
 

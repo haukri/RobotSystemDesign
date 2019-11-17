@@ -1,0 +1,4 @@
+int32 order_number
+int32 yellow_amount
+int32 red_amount
+int32 blue_amount

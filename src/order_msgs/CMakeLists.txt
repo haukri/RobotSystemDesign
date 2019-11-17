@@ -9,6 +9,11 @@ add_service_files(
     CompleteOrder.srv
 )
 
+add_message_files(
+  DIRECTORY msg
+  FILES
+    OrderStatus.msg
+)
 
 generate_messages(
   DEPENDENCIES

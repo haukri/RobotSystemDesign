@@ -3,6 +3,13 @@ Installation
 ************
 This section contains information on how to build and install the ur_rtde library.
 
+If you only want to the use the Python interface, you can install ur_rtde through pip:
+
+.. code-block:: shell
+
+   pip install --user ur_rtde
+
+
 Dependencies
 ============
 .. image:: ../_static/boost-logo.svg
@@ -22,6 +29,9 @@ Dependencies
    The pybind11 dependency is optional and are only required if ur_rtde are to be used with Python. The ur_rtde library
    depends on Boost for networking and threading.
 
+Linux (Ubuntu)
+--------------
+
 You can install Boost on Ubuntu using:
 
 .. code-block:: shell
@@ -30,24 +40,36 @@ You can install Boost on Ubuntu using:
 
 *Optionally* if you want to use ur_rtde with Python install pybind11 using:
 
+*Python 2*
+
 .. code-block:: shell
 
-    git clone --branch v2.2.4 https://github.com/pybind/pybind11.git --depth 1
-    cd pybind11
-    mkdir build
-    cd build
-    cmake ..
-    make
-    sudo make install
+   pip install --user pybind11
 
-.. role:: bash(code)
-   :language: bash
+*Python 3*
 
-.. note::
-    For Python 2.x support use :bash:`cmake -DPYBIND11_PYTHON_VERSION=2.x ..` default is Python3
+.. code-block:: shell
 
-Instructions for Windows
-------------------------
+   pip3 install --user pybind11
+
+
+macOS
+-----
+On macOS install boost with:
+
+.. code-block:: shell
+
+   brew install boost 
+
+and optionally pybind11 using:
+
+.. code-block:: shell
+
+   brew install pybind11
+
+
+Windows
+-------
 Boost precompiled libraries can be found at:
 https://sourceforge.net/projects/boost/files/boost-binaries/
 
@@ -69,6 +91,7 @@ Currently tested on:
 
 *  Ubuntu 16.04 (Xenial Xerus)
 *  Ubuntu 18.04 (Bionic Beaver)
+*  macOS 10.14 (Mojave)
 *  Windows 10 Pro x64
 
 .. note::
@@ -78,6 +101,10 @@ Currently tested on:
 
 Build Instructions
 ==================
+
+Linux (Ubuntu) and macOS
+------------------------
+
 .. code-block:: shell
 
     git clone https://gitlab.com/sdurobotics/ur_rtde.git
@@ -87,6 +114,10 @@ Build Instructions
     cmake ..
     make
     sudo make install
+
+
+.. role:: bash(code)
+   :language: bash
 
 .. note::
     If you want Python 2.x support you must use :bash:`cmake -DPYBIND11_PYTHON_VERSION=2.x ..` in this step also, since the
@@ -100,8 +131,8 @@ Build Instructions
     and next clicking the **'START'** button. You can now run the examples.
 
 
-Instructions for Windows
-------------------------
+Windows
+-------
 .. code-block:: shell
 
     git clone https://gitlab.com/sdurobotics/ur_rtde.git

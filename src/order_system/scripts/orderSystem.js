@@ -23,6 +23,8 @@ const rosnodejs = require('rosnodejs');
 const request = require('request');
 const storage = require('node-persist');
 
+var orderStatusPub;
+
 async function orderSystem() {
 
   await storage.init();
@@ -34,6 +36,7 @@ async function orderSystem() {
       const service = rosNode.advertiseService('/new_order', 'order_msgs/NewOrder', (req, res) => {
         return new Promise(function(resolve, reject) {
           getNewOrder((newOrder) => {
+            orderStatusPub.publish({ order_number: newOrder.id, yellow_amount: newOrder.yellow, red_amount: newOrder.red, blue_amount: newOrder.blue });
             console.log(newOrder);
             res.order_number = newOrder.id;
             res.yellow_amount = newOrder.yellow;
@@ -60,6 +63,8 @@ async function orderSystem() {
           })
         });
       });
+
+      orderStatusPub = rosNode.advertise('/order_status', 'order_msgs/OrderStatus');
 
     });
 }

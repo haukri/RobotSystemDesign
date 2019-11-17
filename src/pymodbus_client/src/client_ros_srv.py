@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import rospy
 from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.register_read_message import ReadHoldingRegistersResponse

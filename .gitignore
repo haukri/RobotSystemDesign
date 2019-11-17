@@ -6,3 +6,5 @@ logs
 node_modules/
 .node-persist
 currentOrder.json
+ur_rtde_old
+*.pyc

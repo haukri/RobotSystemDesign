@@ -20,6 +20,7 @@
 
 #include <ros/ros.h>
 
+#include <std_msgs/String.h>
 #include <packml_msgs/GetStats.h>
 #include <packml_msgs/ResetStats.h>
 #include <packml_msgs/Transition.h>
@@ -44,6 +45,7 @@ protected:
   ros::ServiceServer trans_server_;
   ros::ServiceServer reset_stats_server_;
   ros::ServiceServer get_stats_server_;
+  ros::Subscriber oee_subscriber_;
   packml_msgs::Status status_msg_;
 
   bool transRequest(packml_msgs::Transition::Request& req, packml_msgs::Transition::Response& res);
@@ -53,6 +55,7 @@ private:
   void getCurrentStats(packml_msgs::Stats& out_stats);
   bool getStats(packml_msgs::GetStats::Request& req, packml_msgs::GetStats::Response& response);
   bool resetStats(packml_msgs::ResetStats::Request& req, packml_msgs::ResetStats::Response& response);
+  void oeeCommands(const std_msgs::String::ConstPtr& msg);
 };
 }  // namespace packml_ros
 

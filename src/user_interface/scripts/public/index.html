@@ -16,13 +16,18 @@
         table {
             width: 500px;
         }
-        td, th {
+
+        td,
+        th {
 
             text-align: center;
             padding: 4px;
             font-size: large;
         }
-        table, td, th {
+
+        table,
+        td,
+        th {
             border: 1px solid black;
             border-collapse: collapse;
         }
@@ -31,7 +36,7 @@
 
 <body>
     <div class="header-logo-container">
-        <img class="header-logo" src="logo.png"/>
+        <img class="header-logo" src="logo.png" />
     </div>
     <div class="app-wrapper">
         <div class="ui three item menu">
@@ -48,20 +53,30 @@
                 <div class="column">
                     <h1>PackML State</h1>
                     <a id="state" class="ui massive teal label"></a>
-                    <br>
-                    <br>
-                    <h1>Current Order</h1>
-                    <a class="ui massive blue label">Blue Bricks</a><a id="blue-brick" class="ui massive gray label brick-count">1 Brick</a>
-                    <br>
-                    <br>
-                    <a class="ui massive red label">Red Bricks</a><a id="red-brick" class="ui massive gray label brick-count">1 Brick</a>
-                    <br>
-                    <br>
-                    <a class="ui massive yellow label">Yellow Bricks</a><a id="yellow-brick" class="ui massive gray label brick-count">1 Brick</a>
+                    <div class="ui section divider"></div>
+                    <h1>Status</h1>
+                    <a id="main-control-state" class="ui huge orange label"></a>
                 </div>
                 <div class="column">
                     <h1>Statistics</h1>
-                    <h3 id="availability"></h3>
+                    <div class="ui indicating progress" id="oee-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">OEE</div>
+                    </div>
+                    <div class="ui indicating progress" id="quality-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">Quality</div>
+                    </div>
+                    <div class="ui indicating progress" id="performance-progress">
+                        <div class="bar">
+                            <div class="progress"></div>
+                        </div>
+                        <div class="label">Performance</div>
+                    </div>
                     <div class="ui indicating progress" id="availability-progress">
                         <div class="bar">
                             <div class="progress"></div>
@@ -70,72 +85,72 @@
                     </div>
                 </div>
                 <div class="column">
-                    
+                    <h1>Current Order</h1>
+                    <a class="ui massive teal label brick-count-label"><i class="clipboard list icon"></i>Order
+                        Number</a>
+                    <a id="order-number" class="ui massive gray label brick-count">0</a>
+                    <br>
+                    <br>
+                    <a class="ui massive blue label brick-count-label">Blue Bricks</a>
+                    <a id="blue-brick" class="ui massive gray label brick-count">0</a>
+                    <br>
+                    <br>
+                    <a class="ui massive red label brick-count-label">Red Bricks</a>
+                    <a id="red-brick" class="ui massive gray label brick-count">0</a>
+                    <br>
+                    <br>
+                    <a class="ui massive yellow label brick-count-label">Yellow Bricks</a>
+                    <a id="yellow-brick" class="ui massive gray label brick-count">0</a>
                 </div>
             </div>
         </div>
 
-<!--            <div class="ui home tab" data-tab="packml">-->
+        <!--            <div class="ui home tab" data-tab="packml">-->
         <div id="packml" class="tabcontent">
 
             <div id="packmldraw" align="center"></div>
 
         </div>
 
-<!--            <div class="ui setting tab" data-tab="settings">-->
+        <!--            <div class="ui setting tab" data-tab="settings">-->
         <div id="settings" class="tabcontent">
-<!--                <div class="testing">-->
-                <h4>Testing settings tab</h4>
-                <p>Testing text other than heading in Settings</p>
-                <h2>Different duration spend and performance</h2>
-                <table>
-                    <tr>
-                        <th style="text-align: left"> Percent time spend available:</th>
-                        <th id="availability2"></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Performance:</th>
-                        <th id="performance"></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Quality</th>
-                        <th><div id="quality"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Overall equipment effectivness:</th>
-                        <th><div id="oee"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Total duration:</th>
-                        <th><div id="duration"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Held Duration:</th>
-                        <th><div id="heldduration"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">suspended duration:</th>
-                        <th><div id="suspendedduration"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Idle duration:</th>
-                        <th><div id="idleduration"></div></th>
-                    </tr>
-                    <tr>
-                        <th style="text-align: left">Execute duration:</th>
-                        <th><div id="executeduration"></div></th>
-                    </tr>
-                </table>
-<!--                <p>total time spend available: <div id="availability2"></div></p>-->
-<!--                </div>-->
+            <!--                <div class="testing">-->
+            <h1>Settings</h1>
+            <!--                <p>total time spend available: <div id="availability2"></div></p>-->
+            <!--                </div>-->
         </div>
     </div>
 
     <div id="buttonmenu" class="ui grid">
-        <div class="four wide green column" onclick="packmlCommand('start')"><h1 class="command-button">Start/Restart</h1></div>
-        <div class="four wide orange column" onclick="packmlCommand('hold')"><h1 class="command-button">Hold/Unhold</h1></div>
-        <div class="four wide yellow column" onclick="packmlCommand('stop')"><h1 class="command-button">Stop/Clear</h1></div>
-        <div class="four wide red column" onclick="packmlCommand('abort')"><h1 class="command-button">Abort</h1></div>
+        <div class="four wide green column" onclick="packmlCommand('start')">
+            <h1 class="command-button">Start/Restart</h1>
+        </div>
+        <div class="four wide orange column" onclick="packmlCommand('hold')">
+            <h1 class="command-button">Hold/Unhold</h1>
+        </div>
+        <div class="four wide yellow column" onclick="packmlCommand('stop')">
+            <h1 class="command-button">Stop/Clear</h1>
+        </div>
+        <div class="four wide red column" onclick="packmlCommand('abort')">
+            <h1 class="command-button">Abort</h1>
+        </div>
+    </div>
+
+    <div class="ui modal">
+        <div class="header">
+            <h1>Feeder is empty!</h1>
+        </div>
+        <div class="image content">
+            <div class="ui large image">
+                <img src="feeder.png">
+            </div>
+            <div class="description">
+                <div class="ui header">Please fill the feeder with bricks and then press Feeder is full</div>
+            </div>
+        </div>
+        <div class="actions">
+            <div class="ui approve green huge button">Feeder is full</div>
+        </div>
     </div>
 
     <!--<div class="buttonmenu">

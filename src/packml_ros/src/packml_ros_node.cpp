@@ -110,6 +110,7 @@ int main(int argc, char* argv[])
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
+  sm->setIdealCycleTime(30.0);
   // sm->setSuspended(std::bind(mySuspendedMethod));
   packml_ros::PackmlRos sm_node(ros::NodeHandle(), ros::NodeHandle("~"), sm);
   sm_node.spin();

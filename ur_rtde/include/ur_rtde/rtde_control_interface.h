@@ -1,10 +1,11 @@
-#ifndef RTDE_RTDE_CONTROL_INTERFACE_H
-#define RTDE_RTDE_CONTROL_INTERFACE_H
+#ifndef RTDE_CONTROL_INTERFACE_H
+#define RTDE_CONTROL_INTERFACE_H
 
-#include <rtde_export.h>
+#include <ur_rtde/rtde_export.h>
 #include <ur_rtde/rtde.h>
 #include <ur_rtde/dashboard_client.h>
 #include <ur_rtde/script_client.h>
+#include <boost/thread.hpp>
 #include <thread>
 #include <sstream>
 
@@ -18,6 +19,7 @@
 #define UR_PATH_EXECUTION_TIMEOUT 600
 #define UR_GET_READY_TIMEOUT 3
 #define UR_CMD_RECEIVE_TIMEOUT 3
+#define RTDE_START_SYNCHRONIZATION_TIMEOUT 5
 
 #define UR_JOINT_VELOCITY_MAX 3.14 // rad/s
 #define UR_JOINT_VELOCITY_MIN 0 // rad/s
@@ -52,8 +54,6 @@ class RTDEControlInterface
   };
 
   RTDE_EXPORT bool commandDoneAsync();
-
-  RTDE_EXPORT void disconnect();
 
   /**
     * @returns Can be used to reconnect to the robot after a lost connection.
@@ -333,6 +333,26 @@ class RTDEControlInterface
   RTDE_EXPORT std::vector<double> getTargetWaypoint();
 
   /**
+    * @brief Sets the active tcp offset, i.e. the transformation from the output flange coordinate system to the
+    * TCP as a pose.
+    * @param tcp_offset A pose describing the transformation of the tcp offset.
+    */
+  RTDE_EXPORT bool setTcp(const std::vector<double> &tcp_offset);
+
+  /**
+    * @brief Calculate the inverse kinematic transformation (tool space -> jointspace). If qnear is defined, the
+    * solution closest to qnear is returned.Otherwise, the solution closest to the current joint positions is returned.
+    * If no tcp is provided the currently active tcp of the controller will be used.
+    * @param x tool pose
+    * @param qnear list of joint positions (Optional)
+    * @param maxPositionError the maximum allowed positionerror (Optional)
+    * @param maxOrientationError the maximum allowed orientationerror (Optional)
+    * @returns joint positions
+    */
+  RTDE_EXPORT std::vector<double> getInverseKinematics(const std::vector<double> &x, const std::vector<double> &qnear,
+      double max_position_error=1e-10, double max_orientation_error=1e-10);
+
+  /**
     * @brief Returns true if a program is running on the controller, otherwise it returns false
     */
   RTDE_EXPORT bool isProgramRunning();
@@ -353,14 +373,20 @@ class RTDEControlInterface
 
   std::vector<double> getActualJointPositionsHistoryValue();
 
+  std::vector<double> getInverseKinematicsValue();
+
   void verifyValueIsWithin(const double &value, const double &min, const double &max);
 
   std::string prepareCmdScript(const std::vector<std::vector<double>> &path, const std::string &cmd);
+
+  void receiveCallback();
 
  private:
   std::string hostname_;
   int port_;
   std::shared_ptr<RTDE> rtde_;
+  std::atomic<bool> stop_thread{false};
+  std::shared_ptr<boost::thread> th_;
   std::shared_ptr<DashboardClient> db_client_;
   std::shared_ptr<ScriptClient> script_client_;
   std::shared_ptr<RobotState> robot_state_;
@@ -368,4 +394,4 @@ class RTDEControlInterface
 
 }  // namespace ur_rtde
 
-#endif  // RTDE_RTDE_CONTROL_INTERFACE_H
+#endif  // RTDE_CONTROL_INTERFACE_H

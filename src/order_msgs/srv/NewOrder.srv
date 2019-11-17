@@ -1,6 +1,6 @@
 
 ---
-int64 order_number
-int64 yellow_amount
-int64 red_amount
-int64 blue_amount
+int32 order_number
+int32 yellow_amount
+int32 red_amount
+int32 blue_amount
