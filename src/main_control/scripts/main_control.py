@@ -249,8 +249,8 @@ def publisher():
                 message = "80: Move empty boxes from MiR to table"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = 'move-boxes-from-mir'
-                currentRobotCmd.x_offset = 1.0 # TODO add offsets from camera
-                currentRobotCmd.y_offset = 1.0 # TODO add offsets from camera
+                currentRobotCmd.x_offset = 0.0 # TODO add offsets from camera
+                currentRobotCmd.y_offset = 0.0 # TODO add offsets from camera
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
                 substate = 95
@@ -261,8 +261,8 @@ def publisher():
                 message = "100: Move boxes from waiting zone to MiR"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = 'move-boxes-to-mir'
-                currentRobotCmd.x_offset = 1.0 # TODO add offsets from camera
-                currentRobotCmd.y_offset = 1.0 # TODO add offsets from camera
+                currentRobotCmd.x_offset = 0.0 # TODO add offsets from camera
+                currentRobotCmd.y_offset = 0.0 # TODO add offsets from camera
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
                 substate = 105

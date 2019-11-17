@@ -99,11 +99,46 @@ RTDEControlInterface::RTDEControlInterface(std::string hostname, int port) : hos
   std::vector<std::string> get_actual_joint_positions_history_input = {"input_int_register_0", "input_int_register_1"};
   rtde_->sendInputSetup(get_actual_joint_positions_history_input);
 
+  // Recipe 11
+  std::vector<std::string> get_inverse_kin_input = {
+      "input_int_register_0", "input_double_register_0", "input_double_register_1", "input_double_register_2",
+      "input_double_register_3", "input_double_register_4", "input_double_register_5", "input_double_register_6",
+      "input_double_register_7", "input_double_register_8", "input_double_register_9", "input_double_register_10",
+      "input_double_register_11", "input_double_register_12", "input_double_register_13"};
+  rtde_->sendInputSetup(get_inverse_kin_input);
+
   // Init Robot state
   robot_state_ = std::make_shared<RobotState>();
 
+  // Wait until RTDE data synchronization has started.
+  std::cout << "Waiting for RTDE data synchronization to start..." << std::endl;
+  std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+
   // Start RTDE data synchronization
   rtde_->sendStart();
+
+  while(!rtde_->isStarted())
+  {
+    // Wait until RTDE data synchronization has started or timeout
+    std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+    if (duration > RTDE_START_SYNCHRONIZATION_TIMEOUT)
+    {
+      break;
+    }
+  }
+
+  if (!rtde_->isStarted())
+    throw std::logic_error("Failed to start RTDE data synchronization, before timeout");
+
+  // Start executing receiveCallback
+  th_ = std::make_shared<boost::thread>(boost::bind(&RTDEControlInterface::receiveCallback, this));
+
+  // Wait until the first robot state has been received
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+  // Clear command register
+  sendClearCommand();
 
   if (!isProgramRunning())
   {
@@ -144,27 +179,11 @@ RTDEControlInterface::~RTDEControlInterface()
     if (db_client_->isConnected())
       db_client_->disconnect();
   }
-}
 
-void RTDEControlInterface::disconnect()
-{
-  if (rtde_ != nullptr)
-  {
-    if (rtde_->isConnected())
-      rtde_->disconnect();
-  }
-
-  if (script_client_ != nullptr)
-  {
-    if (script_client_->isConnected())
-      script_client_->disconnect();
-  }
-
-  if (db_client_ != nullptr)
-  {
-    if (db_client_->isConnected())
-      db_client_->disconnect();
-  }
+  // Stop the receive callback function
+  stop_thread = true;
+  th_->interrupt();
+  th_->join();
 }
 
 bool RTDEControlInterface::isConnected()
@@ -256,11 +275,43 @@ bool RTDEControlInterface::reconnect()
   std::vector<std::string> get_actual_joint_positions_history_input = {"input_int_register_0", "input_int_register_1"};
   rtde_->sendInputSetup(get_actual_joint_positions_history_input);
 
+  // Recipe 11
+  std::vector<std::string> get_inverse_kin_input = {
+      "input_int_register_0", "input_double_register_0", "input_double_register_1", "input_double_register_2",
+      "input_double_register_3", "input_double_register_4", "input_double_register_5", "input_double_register_6",
+      "input_double_register_7", "input_double_register_8", "input_double_register_9", "input_double_register_10",
+      "input_double_register_11", "input_double_register_12", "input_double_register_13"};
+  rtde_->sendInputSetup(get_inverse_kin_input);
+
   // Init Robot state
   robot_state_ = std::make_shared<RobotState>();
 
+  // Wait until RTDE data synchronization has started.
+  std::cout << "Waiting for RTDE data synchronization to start..." << std::endl;
+  std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
+
   // Start RTDE data synchronization
   rtde_->sendStart();
+
+  while(!rtde_->isStarted())
+  {
+    // Wait until RTDE data synchronization has started or timeout
+    std::chrono::high_resolution_clock::time_point current_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(current_time - start_time).count();
+    if (duration > RTDE_START_SYNCHRONIZATION_TIMEOUT)
+    {
+      break;
+    }
+  }
+
+  if (!rtde_->isStarted())
+    throw std::logic_error("Failed to start RTDE data synchronization, before timeout");
+
+  // Start executing receiveCallback
+  th_ = std::make_shared<boost::thread>(boost::bind(&RTDEControlInterface::receiveCallback, this));
+
+  // Wait until the first robot state has been received
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
 
   // Clear command register
   sendClearCommand();
@@ -285,6 +336,25 @@ bool RTDEControlInterface::reconnect()
   }
 
   return true;
+}
+
+void RTDEControlInterface::receiveCallback()
+{
+  while (!stop_thread)
+  {
+    // Receive and update the robot state
+    try
+    {
+      rtde_->receiveData(robot_state_);
+    }
+    catch (std::exception& e)
+    {
+      std::cerr << e.what() << std::endl;
+      if (rtde_->isConnected())
+        rtde_->disconnect();
+      stop_thread = true;
+    }
+  }
 }
 
 void RTDEControlInterface::stopRobot()
@@ -809,8 +879,6 @@ bool RTDEControlInterface::isProgramRunning()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     // Read Bits 0-3: Is power on(1) | Is program running(2) | Is teach button pressed(4) | Is power button pressed(8)
     std::bitset<sizeof(uint32_t)> status_bits(robot_state_->getRobot_status());
     return status_bits.test(RobotStatus::ROBOT_STATUS_PROGRAM_RUNNING);
@@ -825,8 +893,6 @@ int RTDEControlInterface::getStepTimeValue()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     return robot_state_->getOutput_int_register_1();
   }
   else
@@ -839,8 +905,6 @@ int RTDEControlInterface::getToolContactValue()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     return robot_state_->getOutput_int_register_1();
   }
   else
@@ -853,8 +917,6 @@ std::vector<double> RTDEControlInterface::getTargetWaypointValue()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     std::vector<double> target_waypoint = {
         robot_state_->getOutput_double_register_0(), robot_state_->getOutput_double_register_1(),
         robot_state_->getOutput_double_register_2(), robot_state_->getOutput_double_register_3(),
@@ -871,8 +933,6 @@ std::vector<double> RTDEControlInterface::getActualJointPositionsHistoryValue()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     std::vector<double> actual_joint_positions_history = {
         robot_state_->getOutput_double_register_0(), robot_state_->getOutput_double_register_1(),
         robot_state_->getOutput_double_register_2(), robot_state_->getOutput_double_register_3(),
@@ -885,12 +945,56 @@ std::vector<double> RTDEControlInterface::getActualJointPositionsHistoryValue()
   }
 }
 
+std::vector<double> RTDEControlInterface::getInverseKinematicsValue()
+{
+  if (robot_state_ != nullptr)
+  {
+    std::vector<double> q = {
+        robot_state_->getOutput_double_register_0(), robot_state_->getOutput_double_register_1(),
+        robot_state_->getOutput_double_register_2(), robot_state_->getOutput_double_register_3(),
+        robot_state_->getOutput_double_register_4(), robot_state_->getOutput_double_register_5()};
+    return q;
+  }
+  else
+  {
+    throw std::logic_error("Please initialize the RobotState, before using it!");
+  }
+}
+
+bool RTDEControlInterface::setTcp(const std::vector<double> &tcp_offset)
+{
+  RTDE::RobotCommand robot_cmd;
+  robot_cmd.type_ = RTDE::RobotCommand::Type::SET_TCP;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_7;
+  robot_cmd.val_ = tcp_offset;
+  return sendCommand(robot_cmd);
+}
+
+std::vector<double> RTDEControlInterface::getInverseKinematics(const std::vector<double> &x,
+                                                const std::vector<double> &qnear,
+                                                double max_position_error,
+                                                double max_orientation_error){
+  RTDE::RobotCommand robot_cmd;
+  robot_cmd.type_ = RTDE::RobotCommand::Type::GET_INVERSE_KINEMATICS;
+  robot_cmd.recipe_id_ = RTDE::RobotCommand::Recipe::RECIPE_11;
+  robot_cmd.val_ = x;
+  robot_cmd.val_.insert(robot_cmd.val_.end(), qnear.begin(), qnear.end());
+  robot_cmd.val_.push_back(max_position_error);
+  robot_cmd.val_.push_back(max_orientation_error);
+  if (sendCommand(robot_cmd))
+  {
+    return getInverseKinematicsValue();
+  }
+  else
+  {
+    return std::vector<double>();
+  }
+}
+
 int RTDEControlInterface::getControlScriptState()
 {
   if (robot_state_ != nullptr)
   {
-    // Receive RobotState
-    rtde_->receiveData(robot_state_);
     return robot_state_->getOutput_int_register_0();
   }
   else
