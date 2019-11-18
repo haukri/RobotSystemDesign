@@ -57,6 +57,7 @@ add_message_files(
 add_service_files(
   FILES
   feeder_srv.srv
+  mir_check.srv
 )
 
 ## Generate actions in the 'action' folder
