@@ -95,7 +95,7 @@ def mir_callback(data):
 
 
 def getNextBrick():
-    global feederStatus
+    global feederStatus, currentOrder
     if currentOrder.blue_amount > 0:
         currentOrder.blue_amount = currentOrder.blue_amount - 1
         feederStatus.blue_amount = feederStatus.blue_amount - 1
@@ -108,44 +108,25 @@ def getNextBrick():
         currentOrder.yellow_amount = currentOrder.yellow_amount - 1
         feederStatus.yellow_amount = feederStatus.yellow_amount - 1
         return "pick-yellow"
-    saveOrder()
 
 
 def orderDone():
     return currentOrder.blue_amount == 0 and currentOrder.red_amount == 0 and currentOrder.yellow_amount == 0
 
 
-def saveOrder():
-    global currentOrder, binNumber
-    with open('currentOrder.json', 'w+') as f:
-        f.write(json.dumps([currentOrder.blue_amount, currentOrder.red_amount, currentOrder.yellow_amount, currentOrder.order_number]))
-    with open('binNumber.json', 'w+') as f:
-        f.write(json.dumps([binNumber]))
-
-
-def loadOrder():
-    global currentOrder, binNumber
-    if os.path.exists('currentOrder.json') and os.path.exists('binNumber.json'):
-        content = ""
-        with open('currentOrder.json', 'r') as f:
-            content = f.read()
-        if(content != ""):
-            print("Loading saved order")
-            order = json.loads(content)
-            currentOrder = type('', (), {})()
-            currentOrder.blue_amount = order[0]
-            currentOrder.red_amount = order[1]
-            currentOrder.yellow_amount = order[2]
-            currentOrder.order_number = order[3]
-            return True
+def loadBinNumber():
+    global binNumber
+    if os.path.exists('binNumber.json'):
         with open('binNumber.json', 'r') as f:
             content = f.read()
-        if(content != ""):
-            data = json.loads(content)
-            binNumber = data[0]
-        return False
-    else:
-        return False
+            if(content != ""):
+                data = json.loads(content)
+                binNumber = data[0]
+
+
+def saveBinNumber():
+    with open('binNumber.json', 'w+') as f:
+        f.write(json.dumps([binNumber]))
 
 
 def deleteOrder():
@@ -164,18 +145,11 @@ def publisher():
             print('PackML state changed!')
 
         if packmlState == EXECUTE:
-            if substate == 0:                # Get new order
-                message = "0: load order"
-                if(not loadOrder()):
-                    message = "No saved order found"
-                    substate = 5
-                else:
-                    substate = 10
-            elif substate == 5:
-                message = "5: New order"
-                currentOrder = newOrder()
-                goodOrder = True
-                saveOrder()
+            elif substate == 0:
+                if currentOrder == 0:
+                    message = "0: New order"
+                    currentOrder = newOrder()
+                    goodOrder = True
                 substate = 10
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
@@ -196,13 +170,14 @@ def publisher():
                         substate = 11
                 else:
                     message = "10: Order done"
-                    substate = 5
+                    substate = 0
                     completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
                         substate = 25
                         binNumber = 1
                     else:
                         binNumber = binNumber + 1
+                    saveBinNumber()
                     deleteOrder()
                     if goodOrder:
                         publishGoodOrder()
@@ -210,7 +185,6 @@ def publisher():
                         publishBadOrder()
             elif substate == 11:            # Discard all bricks that are not valid
                 if robotReady:
-                    # Call verify brick service
                     rospy.sleep(0.5)
                     bricksValid = feederCheck()
                     hasDiscardedBricks = False
@@ -296,6 +270,7 @@ def publisher():
                     substate = 70
             elif substate == 70:
                 message = "70: Request position offsets from camera"
+                rospy.sleep(0.5)
                 mirOffsets = mirPositionOffset()
                 mirOffsets.x = mirOffsets.x / 100.0
                 mirOffsets.y = mirOffsets.y / 100.0
@@ -308,8 +283,8 @@ def publisher():
                 currentRobotCmd.y_offset = mirOffsets.y
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
-                substate = 95
-            elif substate == 95:
+                substate = 85
+            elif substate == 85:
                 if robotReady:
                     substate = 100
             elif substate == 100:
@@ -328,7 +303,7 @@ def publisher():
                 message = "110: Request MiR to go away"
                 msg = String()
                 releaseMirPub.publish(msg)
-                substate = 5
+                substate = 0
 
         elif packmlState == SUSPENDED:
             if substate == 0:
