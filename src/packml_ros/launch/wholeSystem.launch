@@ -5,5 +5,5 @@
   <node name="order_system" pkg="order_system" type="orderSystem.js" />
   <node name="mir_robot" pkg="mir_robot" type="mirRobot.js" />
   <node name="user_interface" pkg="user_interface" type="server.js" />
-  <node name="modbus_client" pkg="pymodbus_client" type="client_ros_srv.py" />
+  <node name="modbus_client" pkg="pymodbus_client" type="modbus_client.py" />
 </launch>

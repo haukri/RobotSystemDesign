@@ -4,7 +4,7 @@ import rospy
 from robot_msgs.msg import RobotCmd, RobotStatus
 from order_msgs.srv import NewOrder, CompleteOrder
 from std_msgs.msg import String
-from pymodbus_client.srv import feeder_srv
+from pymodbus_client.srv import feeder_srv, mir_check
 from packml_msgs.msg import Status
 from packml_msgs.srv import Transition
 import threading
@@ -19,6 +19,7 @@ oeeCommandsPub = 0
 feederEmptyPub = 0
 callMirPub = 0
 releaseMirPub = 0
+mirPositionOffset = 0
 packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
@@ -41,6 +42,7 @@ message = ""
 lastMessage = ""
 goodOrder = True
 packmlTransitionCommand = 0
+mirOffsets = 0
 
 feederStatus = type('', (), {})()
 feederStatus.max_yellow_amount = 13
@@ -154,12 +156,11 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, mirReady, callMirPub, releaseMirPub, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
-            substate = 25
             print('PackML state changed!')
 
         if packmlState == EXECUTE:
@@ -295,13 +296,16 @@ def publisher():
                     substate = 70
             elif substate == 70:
                 message = "70: Request position offsets from camera"
+                mirOffsets = mirPositionOffset()
+                mirOffsets.x = mirOffsets.x / 100.0
+                mirOffsets.y = mirOffsets.y / 100.0
                 substate = 80
             elif substate == 80:
                 message = "80: Move empty boxes from MiR to table"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = 'move-boxes-from-mir'
-                currentRobotCmd.x_offset = 0.0 # TODO add offsets from camera
-                currentRobotCmd.y_offset = 0.0 # TODO add offsets from camera
+                currentRobotCmd.x_offset = mirOffsets.x
+                currentRobotCmd.y_offset = mirOffsets.y
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
                 substate = 95
@@ -312,8 +316,8 @@ def publisher():
                 message = "100: Move boxes from waiting zone to MiR"
                 currentRobotCmd = RobotCmd()
                 currentRobotCmd.command = 'move-boxes-to-mir'
-                currentRobotCmd.x_offset = 0.0 # TODO add offsets from camera
-                currentRobotCmd.y_offset = 0.0 # TODO add offsets from camera
+                currentRobotCmd.x_offset = mirOffsets.x
+                currentRobotCmd.y_offset = mirOffsets.y
                 robotCommandPub.publish(currentRobotCmd)
                 robotReady = False
                 substate = 105
@@ -377,7 +381,7 @@ def publishGoodOrder():
 
 
 def listener():
-    global robotCommandPub, feederCheck, callMirPub, releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+    global robotCommandPub, feederCheck, callMirPub, mirPositionOffset. releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
 
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
@@ -396,11 +400,13 @@ def listener():
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')
     rospy.wait_for_service('feeder_check')
+    rospy.wait_for_service('mir_check')
     rospy.wait_for_service('packml_node/packml/transition')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
     feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
+    mirPositionOffset = rospy.ServiceProxy('mir_check', mir_check)
     packmlTransitionCommand = rospy.ServiceProxy('packml_node/packml/transition', Transition)
 
     thread = threading.Thread(target=publisher)
