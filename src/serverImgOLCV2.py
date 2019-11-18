@@ -26,6 +26,7 @@ from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.transaction import ModbusRtuFramer, ModbusAsciiFramer
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+import cv2.aruco as aruco
 
 # --------------------------------------------------------------------------- #
 # import the twisted libraries we need
@@ -119,6 +120,23 @@ def check_image(image):
 
     return result_y, result_r, result_b, missing
 
+def detect_marker(image):
+    pixels = 665-237
+    mmPpixel = 1500/pixels #0.1 mm pr pixel
+    ground_truth = [628, 384]
+
+    ARUCO_PARAMETERS = aruco.DetectorParameters_create()
+    dictionary = aruco.Dictionary_get(aruco.DICT_5X5_50)
+
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(image, dictionary, parameters=ARUCO_PARAMETERS)
+    error = (ground_truth - corners[0][0][0])*mmPpixel
+    #print("error", error)
+    error_x = error[0]
+    error_y = error[1]
+
+    return int(error_x), int(error_y)
+
+
 
 # --------------------------------------------------------------------------- #
 # define your callback process
@@ -134,24 +152,31 @@ def updating_writer(a):
     #log.debug("updating the context")
     now = time.time()
     context = a
-    register = 1
+    register_coil = 1
+    register_holding = 3
     slave_id = 0x00
     address_yellow = 0
     address_red = 1
     address_blue = 2
     address_missing = 3
+    address_x = 0
+    address_y = 1
 
     rawCapture = PiRGBArray(camera)
     camera.capture(rawCapture, format="bgr")
     image = rawCapture.array
 
     result_y, result_r, result_b, missing = check_image(image)
+    error_x, error_y = detect_marker(image)
+
     #log.debug("new values: " + str(result_y) + " " + str(result_r) + " " + str(result_b))
     #log.debug("Time for update: " + str(time.time()-now))
-    context[slave_id].setValues(register, address_yellow, [result_y])
-    context[slave_id].setValues(register, address_red, [result_r])
-    context[slave_id].setValues(register, address_blue, [result_b])
-    context[slave_id].setValues(register, address_missing, [missing])
+    context[slave_id].setValues(register_coil, address_yellow, [result_y])
+    context[slave_id].setValues(register_coil, address_red, [result_r])
+    context[slave_id].setValues(register_coil, address_blue, [result_b])
+    context[slave_id].setValues(register_coil, address_missing, [missing])
+    context[slave_id].setValues(register_holding, address_x, [error_x])
+    context[slave_id].setValues(register_holding, address_y, [error_y])
 
 
 def run_updating_server():
@@ -160,7 +185,8 @@ def run_updating_server():
     # ----------------------------------------------------------------------- #
 
     store = ModbusSlaveContext(
-        co=ModbusSequentialDataBlock(0, [0, 0, 0, 0]))
+            co=ModbusSequentialDataBlock(0, [0]*10),
+            hr=ModbusSequentialDataBlock(0, [5]*10))
     context = ModbusServerContext(slaves=store, single=True)
 
     # ----------------------------------------------------------------------- #

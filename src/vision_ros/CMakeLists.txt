@@ -32,6 +32,7 @@ add_executable(cam_test src/cam_test)
 add_executable(seg_test src/seg_test)
 add_executable(testing src/testing)
 add_executable(testingV2 src/testingV2)
+add_executable(marker_test src/marker_test)
 
 target_link_libraries(vision_ros
   ${catkin_LIBRARIES}
@@ -61,3 +62,8 @@ target_link_libraries(testingV2
   ${catkin_LIBRARIES}
   ${OpenCV_LIBRARIES}
 )
+target_link_libraries(marker_test
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
+

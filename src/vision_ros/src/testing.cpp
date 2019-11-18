@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   int high_H = 0, high_S = 255, high_V = 255;
   for (size_t i = 0; i < 3; i++) {
     if (i==0) {
-      cap = imread("/home/lasse/Desktop/correctPos.png", CV_LOAD_IMAGE_COLOR);
+      cap = imread("/home/lasse/Desktop/image.png", CV_LOAD_IMAGE_COLOR);
     }
     if (i==1) {
       cap = imread("/home/lasse/Desktop/correctPosCropped.png", CV_LOAD_IMAGE_COLOR);
