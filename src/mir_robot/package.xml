@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package>
+  <name>mir_robot</name>
+  <version>0.0.0</version>
+  <description>A MiR Robot package</description>
+
+  <maintainer email="haukzinn@gmail.com">Haukur Kristinsson</maintainer>
+  <license>Apache 2.0</license>
+
+  <author email="haukzinn@gmail.com">Haukur Kristinsson</author>
+  <buildtool_depend>catkin</buildtool_depend>
+  <run_depend>std_msgs</run_depend>
+
+</package>

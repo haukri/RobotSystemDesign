@@ -17,9 +17,12 @@ robotCommandPub = 0
 mainStatusPub = 0
 oeeCommandsPub = 0
 feederEmptyPub = 0
+callMirPub = 0
+releaseMirPub = 0
 packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
+mirReady = False
 newOrder = 0
 completeOrder = 0
 feederCheck = 0
@@ -84,6 +87,11 @@ def feeder_callback(data):
     feederStatus.empty = False
 
 
+def mir_callback(data):
+    global mirReady
+    mirReady = True
+
+
 def getNextBrick():
     global feederStatus
     if currentOrder.blue_amount > 0:
@@ -146,7 +154,7 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirReady, callMirPub, releaseMirPub, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
@@ -267,10 +275,14 @@ def publisher():
                     substate = 30
             elif substate == 30:            # Call MiR robot for pickup
                 message = "30: Call MiR robot for pickup"
+                msg = String()
+                callMirPub.publish(msg)
+                mirReady = False
                 substate = 40
             elif substate == 40:            
                 message = "40: Wait for MiR to arrive"
-                substate = 50
+                if mirReady:
+                    substate = 50
             elif substate == 50:            
                 message = "50: Find box position offset on MiR"
                 currentRobotCmd = RobotCmd()
@@ -309,7 +321,9 @@ def publisher():
                 if robotReady:
                     substate = 110
             elif substate == 110:
-                message = "100: Request MiR to go away"
+                message = "110: Request MiR to go away"
+                msg = String()
+                releaseMirPub.publish(msg)
                 substate = 5
 
         elif packmlState == SUSPENDED:
@@ -363,18 +377,21 @@ def publishGoodOrder():
 
 
 def listener():
-    global robotCommandPub, feederCheck, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+    global robotCommandPub, feederCheck, callMirPub, releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
 
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
     oeeCommandsPub = rospy.Publisher("packml_node/packml/oee_commands", String, queue_size=10)
     feederEmptyPub = rospy.Publisher("feeder_empty", String, queue_size=10)
+    callMirPub = rospy.Publisher("call_mir", String, queue_size=10)
+    releaseMirPub = rospy.Publisher("release_mir", String, queue_size=10)
 
     rospy.init_node('main_control', anonymous=True)
     
     rospy.Subscriber("packml_node/packml/status", Status, packml_callback)
     rospy.Subscriber("robot_command_status", RobotStatus, robot_callback)
     rospy.Subscriber("feeder_full", String, feeder_callback)
+    rospy.Subscriber("mir_arrived", String, mir_callback)
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')

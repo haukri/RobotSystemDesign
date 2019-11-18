@@ -7,6 +7,7 @@ add_service_files(
   FILES
     NewOrder.srv
     CompleteOrder.srv
+    MIR.srv
 )
 
 add_message_files(
