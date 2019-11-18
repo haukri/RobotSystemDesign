@@ -24,6 +24,7 @@ const request = require('request');
 const storage = require('node-persist');
 
 var orderStatusPub;
+var lastLogEvent = "";
 
 async function orderSystem() {
 
@@ -42,6 +43,7 @@ async function orderSystem() {
             res.yellow_amount = newOrder.yellow;
             res.red_amount = newOrder.red;
             res.blue_amount = newOrder.blue;
+            postLog(10, 'Order_Start', 'order ' + newOrder.id);
             resolve(true);
           });
         });
@@ -53,6 +55,7 @@ async function orderSystem() {
             if(orderCompleted) {
               console.log('Order completed');
               res.success = true;
+              postLog(10, 'Order_Done', 'order ' + req.order_number);
               resolve(true);
             }
             else {
@@ -65,6 +68,12 @@ async function orderSystem() {
       });
 
       orderStatusPub = rosNode.advertise('/order_status', 'order_msgs/OrderStatus');
+
+      rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
+        if(packMLStates[msg.state.val]) {
+          postLog(10, packMLStates[msg.state.val], '');
+        }
+      });
 
     });
 }
@@ -165,7 +174,37 @@ function requestOrder(order, callback)  {
   })
 }
 
+function postLog(cell_id, event, comment) {
+  if(event != lastLogEvent) {
+    request.post({
+      url: 'http://127.0.0.1:5000/log',
+      json: true,
+      body: {
+        cell_id: cell_id,
+        event: event,
+        comment: comment
+      }
+    }, function(error, response, body){
+      if(response.statusCode == 201) {
+        console.log('Event logged');
+      }
+    });
+    lastLogEvent = event;
+  }
+
+}
+
+var packMLStates = {};
+packMLStates[2] = 'PML_Stopped'
+packMLStates[4] = 'PML_Idle'
+packMLStates[5] = 'PML_Suspended'
+packMLStates[6] = 'PML_Execute'
+packMLStates[9] = 'PML_Aborted'
+packMLStates[11] = 'PML_Held'
+packMLStates[106] = 'PML_Complete'
+
 if (require.main === module) {
   // Invoke Main Function
   orderSystem();
 }
+
