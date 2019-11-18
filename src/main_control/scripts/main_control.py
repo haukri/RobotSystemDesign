@@ -11,6 +11,7 @@ import threading
 import json
 from Queue import Queue
 from notification import sendPushNotification
+import os.path
 
 robotCommandPub = 0
 mainStatusPub = 0
@@ -42,9 +43,9 @@ feederStatus = type('', (), {})()
 feederStatus.max_yellow_amount = 13
 feederStatus.max_red_amount = 19
 feederStatus.max_blue_amount = 37
-feederStatus.yellow_amount = 13
-feederStatus.red_amount = 19
-feederStatus.blue_amount = 37
+feederStatus.yellow_amount = 2
+feederStatus.red_amount = 2
+feederStatus.blue_amount = 2
 feederStatus.empty = False
 
 STOPPED = 2
@@ -114,24 +115,27 @@ def saveOrder():
 
 def loadOrder():
     global currentOrder, binNumber
-    content = ""
-    with open('currentOrder.json', 'r') as f:
-        content = f.read()
-    if(content != ""):
-        print("Loading saved order")
-        order = json.loads(content)
-        currentOrder = type('', (), {})()
-        currentOrder.blue_amount = order[0]
-        currentOrder.red_amount = order[1]
-        currentOrder.yellow_amount = order[2]
-        currentOrder.order_number = order[3]
-        return True
-    with open('binNumber.json', 'r') as f:
-        content = f.read()
-    if(content != ""):
-        data = json.loads(content)
-        binNumber = data[0]
-    return False
+    if os.path.exists('currentOrder.json') and os.path.exists('binNumber.json'):
+        content = ""
+        with open('currentOrder.json', 'r') as f:
+            content = f.read()
+        if(content != ""):
+            print("Loading saved order")
+            order = json.loads(content)
+            currentOrder = type('', (), {})()
+            currentOrder.blue_amount = order[0]
+            currentOrder.red_amount = order[1]
+            currentOrder.yellow_amount = order[2]
+            currentOrder.order_number = order[3]
+            return True
+        with open('binNumber.json', 'r') as f:
+            content = f.read()
+        if(content != ""):
+            data = json.loads(content)
+            binNumber = data[0]
+        return False
+    else:
+        return False
 
 
 def deleteOrder():
@@ -147,7 +151,7 @@ def publisher():
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
             packmlState = stateChangeQueue.get()
-            substate = 0
+            substate = 25
             print('PackML state changed!')
 
         if packmlState == EXECUTE:
@@ -186,7 +190,7 @@ def publisher():
                     substate = 5
                     completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
-                        substate = 30
+                        substate = 25
                         binNumber = 1
                     else:
                         binNumber = binNumber + 1
@@ -198,7 +202,7 @@ def publisher():
             elif substate == 11:            # Discard all bricks that are not valid
                 if robotReady:
                     # Call verify brick service
-                    # rospy.sleep(0.5)
+                    rospy.sleep(0.5)
                     bricksValid = feederCheck()
                     hasDiscardedBricks = False
                     substate = 12
@@ -359,7 +363,7 @@ def publishGoodOrder():
 
 
 def listener():
-    global robotCommandPub, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+    global robotCommandPub, feederCheck, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
 
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
@@ -370,7 +374,7 @@ def listener():
     
     rospy.Subscriber("packml_node/packml/status", Status, packml_callback)
     rospy.Subscriber("robot_command_status", RobotStatus, robot_callback)
-    rospy.Subscriber("feeder_full", RobotStatus, feeder_callback)
+    rospy.Subscriber("feeder_full", String, feeder_callback)
     
     rospy.wait_for_service('new_order')
     rospy.wait_for_service('complete_order')

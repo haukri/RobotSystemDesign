@@ -76,13 +76,13 @@ std::vector<double> jointq_pick_bins_34_over = {-1.15169, -1.63318, -2.40567, -0
 std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
 std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
 
-std::vector<double> jointq_mir_camera = {};
+std::vector<double> jointq_mir_camera = {-0.119055, -2.1468, -1.05814, -3.06389, 1.88645, -0.0185254};
 
-std::vector<double> pose_mir_bins_12 = {};
-std::vector<double> pose_mir_bins_12_over = {};
+std::vector<double> pose_mir_bins_12 = {0.514931, -0.449295, 0.111241, -1.76291, 2.59316, 0.0196112 };
+std::vector<double> pose_mir_bins_12_over = {0.514931, -0.449295, 0.251593, -1.76291, 2.59316, 0.0196112};
 
-std::vector<double> pose_mir_bins_34 = {};
-std::vector<double> pose_mir_bins_34_over = {};
+std::vector<double> pose_mir_bins_34 = {0.461951, -0.594905, 0.111241, -1.76291, 2.59316, 0.0196112};
+std::vector<double> pose_mir_bins_34_over = {0.461951, -0.594905, 0.251593, -1.76291, 2.59316, 0.0196112};
 
 
 
@@ -137,14 +137,14 @@ void moveJ(vector<double> jointq, double velocity, double acceleration) {
   }
 }
 
-void moveL(vector<double> pose, double velocity, double acceleration) {
+void moveLinear(vector<double> pose, double velocity, double acceleration) {
   rtde_control->moveL(pose, velocity, acceleration);
   waitForRobot();
   if(robotPaused) {
     ROS_INFO("Robot paused, waiting to start again");
     while(robotPaused){ }
     ROS_INFO("Robot starting");
-    moveL(pose, velocity, acceleration);
+    moveLinear(pose, velocity, acceleration);
   }
 }
 
@@ -442,16 +442,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_dropoff_bins_12_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    moveL(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
     moveJ(jointq_dropoff_bins_34_over, velocity_high, acceleration);
@@ -466,18 +466,22 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_dropoff_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    moveL(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
+
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
   }
   else if(cmd->command == "camera-over-mir") {
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
@@ -486,20 +490,32 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_mir_camera, velocity_high, acceleration);
     if(robotStopped)
       return;
+    
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
+  }
+    else if(cmd->command == "pose-test") {
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveLinear(pose_mir_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
   }
   else if (cmd->command == "move-boxes-from-mir") {
     io_interface->setStandardDigitalOut(4, 1);
 
-    moveL(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
 
-    moveL(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
@@ -520,16 +536,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveL(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
 
-    moveL(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
@@ -547,6 +563,10 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_pick_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
+
+    robot_msgs::RobotStatus status;
+    status.ready = true;
+    robot_status_pub.publish(status);
   }
 
 }
