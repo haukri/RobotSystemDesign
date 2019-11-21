@@ -57,7 +57,7 @@ def callback(data):
     green = False
 
 def publisher():
-    global level, red, yellow, green, packml
+    global red, yellow, green, packml
     r = rospy.Rate(1)
     while not rospy.is_shutdown():
         msg = RobotIO()

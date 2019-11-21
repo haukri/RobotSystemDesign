@@ -137,7 +137,7 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, lastPackmlState, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
@@ -145,7 +145,7 @@ def publisher():
             print('PackML state changed!')
 
         if packmlState == EXECUTE:
-            elif substate == 0:
+            if substate == 0:
                 if currentOrder == 0:
                     message = "0: New order"
                     currentOrder = newOrder()
@@ -356,7 +356,7 @@ def publishGoodOrder():
 
 
 def listener():
-    global robotCommandPub, feederCheck, callMirPub, mirPositionOffset. releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+    global robotCommandPub, feederCheck, callMirPub, mirPositionOffset, releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
 
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
