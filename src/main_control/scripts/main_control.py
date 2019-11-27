@@ -12,6 +12,7 @@ import json
 from Queue import Queue
 from notification import sendPushNotification
 import os.path
+from collections import defaultdict
 
 robotCommandPub = 0
 mainStatusPub = 0
@@ -53,6 +54,8 @@ feederStatus.red_amount = 2
 feederStatus.blue_amount = 2
 feederStatus.empty = False
 
+substates = defaultdict(lambda: 0)
+
 STOPPED = 2
 STARTING = 3
 IDLE = 4
@@ -71,6 +74,7 @@ UNHOLDING = 104
 COMPLETING = 105
 COMPLETE = 106
 
+# TODO robot begins order from the start after supsended for feeder empty
 
 def packml_callback(data):
     global stateChangeQueue, lastState
@@ -121,7 +125,8 @@ def loadBinNumber():
             content = f.read()
             if(content != ""):
                 data = json.loads(content)
-                binNumber = data[0]
+                # binNumber = data[0]
+                binNumber = 0
 
 
 def saveBinNumber():
@@ -141,15 +146,19 @@ def publisher():
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if(not stateChangeQueue.empty()):
+            if packmlState == EXECUTE:
+                substates[EXECUTE] = substate
             packmlState = stateChangeQueue.get()
             print('PackML state changed!')
+            substate = substates[packmlState]
 
         if packmlState == EXECUTE:
             if substate == 0:
-                if currentOrder == 0:
-                    message = "0: New order"
-                    currentOrder = newOrder()
-                    goodOrder = True
+                substate = 1
+            elif substate == 1:
+                message = "0: New order"
+                currentOrder = newOrder()
+                goodOrder = True
                 substate = 10
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
@@ -173,11 +182,11 @@ def publisher():
                     substate = 0
                     completeOrder(currentOrder.order_number)
                     if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
-                        substate = 25
+                        substate = 30
                         binNumber = 1
                     else:
                         binNumber = binNumber + 1
-                    saveBinNumber()
+                    # saveBinNumber()
                     deleteOrder()
                     if goodOrder:
                         publishGoodOrder()
@@ -272,13 +281,13 @@ def publisher():
                 message = "70: Request position offsets from camera"
                 rospy.sleep(0.5)
                 mirOffsets = mirPositionOffset()
-                mirOffsets.x = mirOffsets.x / 100.0
-                mirOffsets.y = mirOffsets.y / 100.0
+                mirOffsets.x = mirOffsets.x / 1000.0
+                mirOffsets.y = mirOffsets.y / 1000.0
                 substate = 80
             elif substate == 80:
-                message = "80: Move empty boxes from MiR to table"
+                message = "80: Move boxes from waiting zone to MiR"
                 currentRobotCmd = RobotCmd()
-                currentRobotCmd.command = 'move-boxes-from-mir'
+                currentRobotCmd.command = 'move-boxes-to-mir'
                 currentRobotCmd.x_offset = mirOffsets.x
                 currentRobotCmd.y_offset = mirOffsets.y
                 robotCommandPub.publish(currentRobotCmd)
@@ -288,9 +297,9 @@ def publisher():
                 if robotReady:
                     substate = 100
             elif substate == 100:
-                message = "100: Move boxes from waiting zone to MiR"
+                message = "100: Move empty boxes from MiR to table"
                 currentRobotCmd = RobotCmd()
-                currentRobotCmd.command = 'move-boxes-to-mir'
+                currentRobotCmd.command = 'move-boxes-from-mir'
                 currentRobotCmd.x_offset = mirOffsets.x
                 currentRobotCmd.y_offset = mirOffsets.y
                 robotCommandPub.publish(currentRobotCmd)
@@ -313,6 +322,7 @@ def publisher():
                     feederStatus.red_amount = feederStatus.max_red_amount
                     feederStatus.yellow_amount = feederStatus.max_yellow_amount
                     substate = 10
+                    substates[EXECUTE] = 0
                     unsuspendMachine()
             elif substate == 10:
                 message = "10: Waiting for transition to state execute"

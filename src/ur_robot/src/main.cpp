@@ -39,6 +39,8 @@ double acceleration = 2;
 bool robotStopped = false;
 bool robotPaused = false;
 
+const double theta = -0.39;
+
 std::string robot_ip = "192.168.1.10";
 
 std::vector<double> jointq_pick_red = {-1.76932, -2.24, -2.37864, 0.610792, 1.44958, 0.167349};
@@ -53,28 +55,25 @@ std::vector<double> jointq_pick_yellow_over = {-1.55849, -2.1221, -2.53371, 0.65
 std::vector<double> jointq_pick_midpoint = {-1.30838, -1.17342, -2.32572, -1.19639, 1.57305, 0.623872};
 std::vector<double> jointq_feeder_midpoint = {-1.79356, -1.6487, -2.31727, -0.704819, 1.58955, 0.122001};
 
-std::vector<double> jointq_bin1 = {-1.07664, -1.76487, -2.18062, -0.736245, 1.59791, -0.683229};
-std::vector<double> jointq_bin2 = {-0.907774, -1.6287, -2.34551, -0.703142, 1.59225, -0.514205};
-std::vector<double> jointq_bin3 = {-1.27674, -1.62441, -2.34612, -0.717447, 1.60367, -0.883123};
-std::vector<double> jointq_bin4 = {-1.14082, -1.44034, -2.52074, -0.72255, 1.6001, -0.746855};
-
-std::vector<double> joint_q1 = {-1.12738, -1.59118, -2.1059, -0.96981, 1.59176, 0.032187};
-std::vector<double> joint_q2 = {-1.82089, -2.04634, -1.22491, -1.11367, 1.59176, 0.0321989};
+// std::vector<double> jointq_bin1 = {-1.07664, -1.76487, -2.18062, -0.736245, 1.59791, -0.683229};
+// std::vector<double> jointq_bin2 = {-0.907774, -1.6287, -2.34551, -0.703142, 1.59225, -0.514205};
+// std::vector<double> jointq_bin3 = {-1.27674, -1.62441, -2.34612, -0.717447, 1.60367, -0.883123};
+// std::vector<double> jointq_bin4 = {-1.14082, -1.44034, -2.52074, -0.72255, 1.6001, -0.746855};
 
 std::vector<double> joint_verify_feeder = {-1.78183, -1.62972, -2.13145, -1.78324, 1.72335, 0.0565257};
 std::vector<double> jointq_discard_bin = {-2.17897, -1.86781, -2.01717, -0.829591, 1.64373, -0.175439};
 
-std::vector<double> jointq_pick_bins_12 = {-0.959291, -1.84798, -2.24979, -0.642775, 1.56402, -0.565669};
-std::vector<double> jointq_pick_bins_12_over = {-0.959411, -1.76864, -2.22276, -0.749148, 1.5644, -0.565538};
+// std::vector<double> jointq_pick_bins_12 = {-0.959291, -1.84798, -2.24979, -0.642775, 1.56402, -0.565669};
+// std::vector<double> jointq_pick_bins_12_over = {-0.959411, -1.76864, -2.22276, -0.749148, 1.5644, -0.565538};
 
-std::vector<double> jointq_dropoff_bins_12 = {0.112281, -1.6495, -2.54432, -0.536036, 1.58595, -1.0534};
-std::vector<double> jointq_dropoff_bins_12_over = {0.112257, -1.48768, -2.48922, -0.753941, 1.58568, -1.11153};
+// std::vector<double> jointq_dropoff_bins_12 = {0.112281, -1.6495, -2.54432, -0.536036, 1.58595, -1.0534};
+// std::vector<double> jointq_dropoff_bins_12_over = {0.112257, -1.48768, -2.48922, -0.753941, 1.58568, -1.11153};
 
-std::vector<double> jointq_pick_bins_34 = {-1.15152, -1.70928, -2.43062, -0.599233, 1.55877, -0.757671};
-std::vector<double> jointq_pick_bins_34_over = {-1.15169, -1.63318, -2.40567, -0.70023, 1.5592, -0.757599};
+// std::vector<double> jointq_pick_bins_34 = {-1.15152, -1.70928, -2.43062, -0.599233, 1.55877, -0.757671};
+// std::vector<double> jointq_pick_bins_34_over = {-1.15169, -1.63318, -2.40567, -0.70023, 1.5592, -0.757599};
 
-std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
-std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
+// std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
+// std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
 
 std::vector<double> jointq_mir_camera = {-0.119055, -2.1468, -1.05814, -3.06389, 1.88645, -0.0185254};
 
@@ -83,6 +82,25 @@ std::vector<double> pose_mir_bins_12_over = {0.514931, -0.449295, 0.251593, -1.7
 
 std::vector<double> pose_mir_bins_34 = {0.461951, -0.594905, 0.111241, -1.76291, 2.59316, 0.0196112};
 std::vector<double> pose_mir_bins_34_over = {0.461951, -0.594905, 0.251593, -1.76291, 2.59316, 0.0196112};
+
+std::vector<double> jointq_dropoff_box_feeder = {-1.33032, -1.90449, -1.90989, -0.302839, 1.16162, 0.511554};
+std::vector<double> jointq_dropoff_box_feeder_over = {-1.33049, -1.80391, -1.81834, -0.49512, 1.16212, 0.511996};
+
+std::vector<double> pose_pick_bins_34 = {-0.0265153, -0.592389, 0.24347, -0.53179, -2.76379, 1.0223};
+std::vector<double> jointq_pick_bins_34 = {-1.3215, -1.97924, -1.99447, -0.138782, 1.16018, 0.502283};
+std::vector<double> pose_pick_bins_34_over = {-0.0265259, -0.592396, 0.363126, -0.531822, -2.76378, 1.02235};
+std::vector<double> jointq_pick_bins_34_over = {-1.32189, -1.79068, -1.87183, -0.450243, 1.161, 0.503037};
+
+
+std::vector<double> pose_pick_bins_12 = {-0.00154898, -0.517094, 0.173199, -0.549038, -2.8043, 1.04563};
+std::vector<double> jointq_pick_bins_12 = {-1.23288, -2.01383, -2.24734, 0.137893, 1.14912, 0.595676};
+std::vector<double> pose_pick_bins_12_over = {-0.00155777, -0.517087, 0.305297, -0.549087, -2.80429, 1.04566};
+std::vector<double> jointq_pick_bins_12_over = {-1.23357, -1.70737, -2.15245, -0.263907, 1.15002, 0.596839};
+
+std::vector<double> jointq_bin1 = {-1.10219, -1.87683, -2.25696, -0.0198606, 1.01892, 0.668068};
+std::vector<double> jointq_bin2 = {-1.25404, -1.81634, -2.33334, 0.0766179, 1.12885, 0.561049};
+std::vector<double> jointq_bin3 = {-1.23429, -1.87267, -1.9992, -0.199515, 1.10251, 0.554278};
+std::vector<double> jointq_bin4 = {-1.35832, -1.82184, -2.03969, -0.235699, 1.17161, 0.485261};
 
 
 
@@ -102,8 +120,8 @@ std::vector<double> getBinJointQ(int binNumber) {
 }
 
 vector<double> offsetPose(vector<double> pose, double x_offset, double y_offset) {
-  pose[0] += x_offset;
-  pose[1] += y_offset;
+  pose[0] += x_offset * cos(theta) - y_offset * sin(theta);
+  pose[1] += x_offset * sin(theta) + y_offset * cos(theta);
   return pose;
 }
 
@@ -360,6 +378,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
+  /* 
   else if(cmd->command == "move-boxes-waiting") {
     ROS_INFO("Moving boxes to waiting zone");
     
@@ -423,47 +442,23 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     robot_msgs::RobotStatus status;
     status.ready = true;
     robot_status_pub.publish(status);
-  }
+  }*/
   else if(cmd->command == "move-boxes-to-mir") {
     io_interface->setStandardDigitalOut(4, 1);
     
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_bins_12, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-
-    io_interface->setStandardDigitalOut(4, 0);
-
-    moveJ(jointq_dropoff_bins_12_over, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    
-    io_interface->setStandardDigitalOut(4, 1);
-
-    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_dropoff_bins_34_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;  
-    moveJ(jointq_dropoff_bins_34, velocity_low, acceleration);
+    moveLinear(pose_pick_bins_34, velocity_low, acceleration);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
 
-    moveJ(jointq_dropoff_bins_34_over, velocity_low, acceleration);
+    moveLinear(pose_pick_bins_34_over, velocity_low, acceleration);
     if(robotStopped)
       return;
     moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
@@ -476,6 +471,30 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     io_interface->setStandardDigitalOut(4, 1);
 
     moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;  
+    moveLinear(pose_pick_bins_12, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+
+    io_interface->setStandardDigitalOut(4, 0);
+
+    moveLinear(pose_pick_bins_12_over, velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
+    if(robotStopped)
+      return;
+    
+    io_interface->setStandardDigitalOut(4, 1);
+
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_low, acceleration);
     if(robotStopped)
       return;
 
@@ -495,11 +514,19 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
-    else if(cmd->command == "pose-test") {
+  else if(cmd->command == "pose-test-12") {
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveLinear(pose_mir_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+  }
+    else if(cmd->command == "pose-test-34") {
+    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
     if(robotStopped)
       return;
   }
@@ -521,16 +548,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_bins_12, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder, velocity_low, acceleration);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_pick_bins_12_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, velocity_low, acceleration);
     if(robotStopped)
       return;
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
@@ -551,16 +578,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_pick_midpoint, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, velocity_high, acceleration);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_bins_34, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder, velocity_low, acceleration);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_pick_bins_34_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, velocity_low, acceleration);
     if(robotStopped)
       return;
 
@@ -620,9 +647,25 @@ int main(int argc, char **argv)
 
   io_interface = new RTDEIOInterface(robot_ip);
 
-  ros::MultiThreadedSpinner s(2);
+  ros::AsyncSpinner s(2);
 
-  ros::spin(s);
+  s.start();
+
+  while(ros::ok()) {
+    string safetymode = dashboard_client->safetymode();
+    string robotmode = dashboard_client->robotmode();
+    if (!(safetymode == "Safetymode: NORMAL" || safetymode == "Safetymode: REDUCED" || safetymode == "Safetymode: RECOVERY")) {
+      cout << "resetting safety" << endl;
+      // dashboard_client->restartSafety();
+      // dashboard_client->closeSafetyPopup();
+    }
+    else if(robotmode == "Robotmode: POWER_OFF") {
+
+    }
+    cout << dashboard_client->safetymode() << endl;
+    cout << dashboard_client->robotmode() << endl;
+    ros::Duration(0.5).sleep();
+  }
 
   rtde_control->stopRobot();
 

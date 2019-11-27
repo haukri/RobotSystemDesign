@@ -29,8 +29,8 @@ def mir_callback(req):
     client.close()
 
     srv = mir_checkResponse()
-    srv.x = x.registers[0]
-    srv.y = y.registers[0]
+    srv.x = x.registers[0] - 128
+    srv.y = y.registers[0] - 128
     return srv
 
 

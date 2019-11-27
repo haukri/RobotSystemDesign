@@ -104,7 +104,8 @@ async function completeOrder(orderID, callback) {
       //  'Accept-Charset': 'utf-8'
       //}
     };
-
+    await storage.setItem('current_order', -1);
+    callback(true);
     request(options, async function(err, res, body) {
       if(res.statusCode === 204) {
         await storage.setItem('current_order', -1);
