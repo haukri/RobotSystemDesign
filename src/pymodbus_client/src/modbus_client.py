@@ -26,11 +26,13 @@ def mir_callback(req):
 
     x = client.read_holding_registers(0,1)
     y = client.read_holding_registers(1,1)
+    marker_found = client.read_coils(4,1)
     client.close()
 
     srv = mir_checkResponse()
     srv.x = x.registers[0] - 128
     srv.y = y.registers[0] - 128
+    srv.marker_found = marker_found.bits[0]
     return srv
 
 

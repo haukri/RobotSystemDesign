@@ -1,3 +1,4 @@
 ---
 int8 x
 int8 y
+bool marker_found
