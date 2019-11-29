@@ -247,16 +247,6 @@ def publisher():
                 if robotReady:
                     message = "20: Packing brick done"
                     substate = 10
-            elif substate == 25:            # Moving boxes to waiting zone
-                message = "25: Moving boxes to waiting zone"
-                currentRobotCmd = RobotCmd()
-                currentRobotCmd.command = 'move-boxes-waiting'
-                robotCommandPub.publish(currentRobotCmd)
-                robotReady = False
-                substate = 26
-            elif substate == 26:            # Wait for robot finishing moving boxes to waiting zone
-                if robotReady:
-                    substate = 30
             elif substate == 30:            # Call MiR robot for pickup
                 message = "30: Call MiR robot for pickup"
                 msg = String()

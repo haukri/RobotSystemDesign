@@ -55,7 +55,7 @@ function postMission(callback) {
       'Authorization': 'Basic ZGlzdHJpYnV0b3I6NjJmMmYwZjFlZmYxMGQzMTUyYzk1ZjZmMDU5NjU3NmU0ODJiYjhlNDQ4MDY0MzNmNGNmOTI5NzkyODM0YjAxNA=='
     },
     url: 'http://10.10.19.42:8080/v2.0.0/mission_queue',
-    body: '{"mission_id": "52417bee-09da-11ea-980f-94c691159b76"}'
+    body: '{"mission_id": "e9d454d1-11c6-11ea-97b2-94c691159b76"}'
   }, function(error, response, body){
     if(response.statusCode == 201) {
       let missionInfo = JSON.parse(body);
