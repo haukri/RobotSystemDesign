@@ -145,9 +145,9 @@ def publisher():
     global packmlState, currentOrder, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
+        if packmlState == EXECUTE:
+            substates[EXECUTE] = substate
         if(not stateChangeQueue.empty()):
-            if packmlState == EXECUTE:
-                substates[EXECUTE] = substate
             packmlState = stateChangeQueue.get()
             print('PackML state changed!')
             substate = substates[packmlState]
@@ -196,8 +196,12 @@ def publisher():
                 if robotReady:
                     rospy.sleep(0.5)
                     bricksValid = feederCheck()
-                    hasDiscardedBricks = False
-                    substate = 12
+                    if not bricksValid.missing:
+                        hasDiscardedBricks = False
+                        substate = 12
+                    else:
+                        message = "11: Camera could not find bricks"
+                        substate = 10
             elif substate == 12:
                 if not bricksValid.red:
                     bricksValid.red = True
@@ -312,7 +316,7 @@ def publisher():
                     feederStatus.red_amount = feederStatus.max_red_amount
                     feederStatus.yellow_amount = feederStatus.max_yellow_amount
                     substate = 10
-                    substates[EXECUTE] = 0
+                    substates[EXECUTE] = 10
                     unsuspendMachine()
             elif substate == 10:
                 message = "10: Waiting for transition to state execute"
@@ -330,7 +334,7 @@ def unsuspendMachine():
 
 
 def feederIsEmpty():
-    return feederStatus.blue_amount <= 5 or feederStatus.red_amount <= 4 or feederStatus.yellow_amount <= 3
+    return feederStatus.blue_amount <= 4 or feederStatus.red_amount <= 3 or feederStatus.yellow_amount <= 2
 
 
 def publishStatus():

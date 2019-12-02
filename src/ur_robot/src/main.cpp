@@ -5,6 +5,7 @@
 #include "robot_msgs/RobotStatus.h"
 #include "robot_msgs/RobotIO.h"
 #include "packml_msgs/Status.h"
+#include "packml_msgs/Transition.h"
 
 #include <ur_rtde/rtde_receive_interface.h>
 #include <ur_rtde/rtde_control_interface.h>
@@ -21,6 +22,10 @@
 #define UNSUSPENDING 102
 #define UNHOLDING 104
 
+#define START 2
+#define STOP 3
+#define RESET 6
+
 using namespace ur_rtde;
 using namespace std;
 
@@ -31,12 +36,17 @@ RTDEIOInterface* io_interface;
 ros::Publisher robot_status_pub;
 
 // Data to be sent
-double velocity = 0.8;
-double velocity_high = 3;
-double velocity_low = 0.8;
-double acceleration = 2;
+double joint_velocity_extreme = 3;
+double joint_velocity_high = 2;
+double joint_velocity_low = 0.5;
+double joint_acceleration_low = 2;
+double joint_acceleration_high = 10;
 double pose_velocity_low = 0.3;
-double pose_velocity_high = 0.6;
+double pose_velocity_high = 2;
+double pose_acceleration_low = 2;
+double pose_acceleration_high = 5;
+
+const double gripping_time = 0.2;
 
 bool robotStopped = false;
 bool robotPaused = false;
@@ -182,25 +192,26 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_blue_over, velocity_high, acceleration);
+    moveJ(jointq_pick_blue_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_blue, velocity_low, acceleration);
+    moveJ(jointq_pick_blue, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_blue_over, velocity_low, acceleration);
+    moveJ(jointq_pick_blue_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
@@ -215,25 +226,26 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_red_over, velocity_high, acceleration);
+    moveJ(jointq_pick_red_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_red, velocity_low, acceleration);
+    moveJ(jointq_pick_red, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_red_over, velocity_low, acceleration);
+    moveJ(jointq_pick_red_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
@@ -248,25 +260,26 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_yellow_over, velocity_high, acceleration);
+    moveJ(jointq_pick_yellow_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_yellow, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_yellow_over, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(getBinJointQ(cmd->binNumber), velocity_high, acceleration);
+    moveJ(getBinJointQ(cmd->binNumber), joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
@@ -278,10 +291,10 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
   }
     else if(cmd->command == "verify-bricks") {
     ROS_INFO("Verifying Bricks");
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(joint_verify_feeder, velocity_high, acceleration);
+    moveJ(joint_verify_feeder, joint_velocity_high, joint_acceleration_low);
     if(robotStopped)
       return;
     robot_msgs::RobotStatus status;
@@ -293,29 +306,31 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_yellow_over, velocity_high, acceleration);
+    moveJ(jointq_pick_yellow_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_yellow, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_yellow_over, velocity_low, acceleration);
+    moveJ(jointq_pick_yellow_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
+    ros::Duration(gripping_time).sleep();
     
     robot_msgs::RobotStatus status;
     status.ready = true;
@@ -326,29 +341,31 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_blue_over, velocity_high, acceleration);
+    moveJ(jointq_pick_blue_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_blue, velocity_low, acceleration);
+    moveJ(jointq_pick_blue, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_blue_over, velocity_low, acceleration);
+    moveJ(jointq_pick_blue_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
+    ros::Duration(gripping_time).sleep();
     
     robot_msgs::RobotStatus status;
     status.ready = true;
@@ -359,160 +376,99 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_feeder_midpoint, velocity_high, acceleration);
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_red_over, velocity_high, acceleration);
+    moveJ(jointq_pick_red_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_red, velocity_low, acceleration);
+    moveJ(jointq_pick_red, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
     
-    moveJ(jointq_pick_red_over, velocity_low, acceleration);
+    moveJ(jointq_pick_red_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
+    moveJ(jointq_pick_midpoint, joint_velocity_extreme, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_discard_bin, velocity_high, acceleration);
+    moveJ(jointq_discard_bin, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
+    ros::Duration(gripping_time).sleep();
     
     robot_msgs::RobotStatus status;
     status.ready = true;
     robot_status_pub.publish(status);
   }
-  /* 
-  else if(cmd->command == "move-boxes-waiting") {
-    ROS_INFO("Moving boxes to waiting zone");
-    
-    io_interface->setStandardDigitalOut(4, 1);
-    
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_bins_12, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    
-    io_interface->setStandardDigitalOut(4, 0);
-    
-    moveJ(jointq_pick_bins_12_over, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_dropoff_bins_12_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_dropoff_bins_12, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    
-    io_interface->setStandardDigitalOut(4, 1);
-
-    moveJ(jointq_dropoff_bins_12_over, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_bins_34, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    
-    io_interface->setStandardDigitalOut(4, 0);
-    
-    moveJ(jointq_pick_bins_34_over, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_dropoff_bins_34_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_dropoff_bins_34, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    
-    io_interface->setStandardDigitalOut(4, 1);
-
-    moveJ(jointq_dropoff_bins_34_over, velocity_low, acceleration);
-    if(robotStopped)
-      return;
-
-    robot_msgs::RobotStatus status;
-    status.ready = true;
-    robot_status_pub.publish(status);
-  }*/
   else if(cmd->command == "move-boxes-to-mir") {
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_34_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(pose_pick_bins_34, pose_velocity_low, acceleration);
+    moveLinear(pose_pick_bins_34, pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
 
-    moveLinear(pose_pick_bins_34_over, pose_velocity_low, acceleration);
+    moveLinear(pose_pick_bins_34_over, pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_dropoff_34_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, pose_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_dropoff_34, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_34, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    moveLinear(offsetPose(pose_mir_dropoff_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;    
-    moveJ(jointq_pick_bins_12_over, velocity_high, acceleration);
+    moveJ(jointq_pick_bins_12_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;  
-    moveLinear(pose_pick_bins_12, pose_velocity_low, acceleration);
+    moveLinear(pose_pick_bins_12, pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
 
-    moveLinear(pose_pick_bins_12_over, pose_velocity_low, acceleration);
+    moveLinear(pose_pick_bins_12_over, pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_dropoff_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, pose_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_dropoff_12, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_12, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
     
     io_interface->setStandardDigitalOut(4, 1);
 
-    moveLinear(offsetPose(pose_mir_dropoff_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_dropoff_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
 
@@ -521,10 +477,10 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     robot_status_pub.publish(status);
   }
   else if(cmd->command == "camera-over-mir") {
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_camera, velocity_high, acceleration);
+    moveJ(jointq_mir_camera, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     
@@ -532,79 +488,65 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
-  else if(cmd->command == "pose-test-12") {
-    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), velocity_high, acceleration);
-    if(robotStopped)
-      return;
-  }
-    else if(cmd->command == "pose-test-34") {
-    moveJ(jointq_pick_midpoint, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveJ(jointq_pick_bins_34_over, velocity_high, acceleration);
-    if(robotStopped)
-      return;
-  }
   else if (cmd->command == "move-boxes-from-mir") {
     io_interface->setStandardDigitalOut(4, 1);
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, pose_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, acceleration);
-    if(robotStopped)
-      return;
-    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
 
-    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_box_feeder_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_box_feeder, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_dropoff_box_feeder_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, pose_acceleration_high);
     if(robotStopped)
       return;
-    moveLinear(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 0);
+    ros::Duration(gripping_time).sleep();
 
-    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, acceleration);
+    moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_mir_midpoint, velocity_high, acceleration);
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_box_feeder_over, velocity_high, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_dropoff_box_feeder, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
 
     io_interface->setStandardDigitalOut(4, 1);
     
-    moveJ(jointq_dropoff_box_feeder_over, velocity_low, acceleration);
+    moveJ(jointq_dropoff_box_feeder_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
 
@@ -617,8 +559,8 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
 
 void stopCallback(const packml_msgs::Status::ConstPtr& msg)
 {
-  if(msg->state.val == STOPPING || msg->state.val == ABORTING) {
-    ROS_INFO("Stopping Robot");
+  if(msg->state.val == ABORTING) {
+    ROS_INFO("Aborting Robot");
     rtde_control->reuploadScript();
     ROS_INFO("Reconnected Robot");
     robotStopped = true;
@@ -632,7 +574,6 @@ void stopCallback(const packml_msgs::Status::ConstPtr& msg)
   else if(msg->state.val == STARTING) {
     ROS_INFO("Starting Robot from stopped");
     robotStopped = false;
-
   }
   else if(msg->state.val == UNHOLDING || msg->state.val == UNSUSPENDING) {
     ROS_INFO("Starting Robot from paused");
@@ -658,6 +599,8 @@ int main(int argc, char **argv)
 
   ros::Subscriber io_sub = n.subscribe("robot_io", 10, ioCallback);
 
+  ros::ServiceClient transitionClient = n.serviceClient<packml_msgs::Transition>("packml_node/packml/transition");
+
   rtde_control = new RTDEControlInterface(robot_ip);
   dashboard_client = new DashboardClient(robot_ip);
   dashboard_client->connect();
@@ -668,19 +611,43 @@ int main(int argc, char **argv)
 
   s.start();
 
+  bool blue_blink = false;
+  string lastSafetyMode = "";
+
   while(ros::ok()) {
     string safetymode = dashboard_client->safetymode();
     string robotmode = dashboard_client->robotmode();
+    if(safetymode == "Safetymode: SAFEGUARD_STOP") {
+      if(safetymode != lastSafetyMode) {
+        packml_msgs::Transition srv;
+        srv.request.command = STOP;
+        transitionClient.call(srv);
+      }
+      blue_blink = !blue_blink;
+    }
+    else {
+      if(lastSafetyMode == "Safetymode: SAFEGUARD_STOP") {
+        packml_msgs::Transition srv;
+        srv.request.command = RESET;
+        transitionClient.call(srv);
+        ros::Duration(0.5).sleep();
+        srv.request.command = START;
+        transitionClient.call(srv);
+      }
+      blue_blink = false;
+    }
+
+    io_interface->setStandardDigitalOut(5, blue_blink ? 1 : 0);
+
     if (!(safetymode == "Safetymode: NORMAL" || safetymode == "Safetymode: REDUCED" || safetymode == "Safetymode: RECOVERY")) {
-      cout << "resetting safety" << endl;
+      // cout << "resetting safety" << endl;
       // dashboard_client->restartSafety();
       // dashboard_client->closeSafetyPopup();
     }
-    else if(robotmode == "Robotmode: POWER_OFF") {
-
-    }
     // cout << dashboard_client->safetymode() << endl;
     // cout << dashboard_client->robotmode() << endl;
+    
+    lastSafetyMode = safetymode;
     ros::Duration(0.5).sleep();
   }
 
