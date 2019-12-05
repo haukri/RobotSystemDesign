@@ -18,6 +18,7 @@
 #define ABORTING 8
 #define STARTING 3
 #define HOLDING 10
+#define SUSPENDED 5
 #define SUSPENDING 101
 #define UNSUSPENDING 102
 #define UNHOLDING 104
@@ -50,6 +51,8 @@ const double gripping_time = 0.2;
 
 bool robotStopped = false;
 bool robotPaused = false;
+
+int packMLState = 0;
 
 const double theta = -0.39;
 
@@ -559,6 +562,7 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
 
 void stopCallback(const packml_msgs::Status::ConstPtr& msg)
 {
+  packMLState = msg->state.val;
   if(msg->state.val == ABORTING) {
     ROS_INFO("Aborting Robot");
     rtde_control->reuploadScript();
@@ -617,25 +621,36 @@ int main(int argc, char **argv)
   while(ros::ok()) {
     string safetymode = dashboard_client->safetymode();
     string robotmode = dashboard_client->robotmode();
-    if(safetymode == "Safetymode: SAFEGUARD_STOP") {
-      if(safetymode != lastSafetyMode) {
-        packml_msgs::Transition srv;
-        srv.request.command = STOP;
-        transitionClient.call(srv);
+    if (packMLState != SUSPENDED) {
+      if(safetymode == "Safetymode: SAFEGUARD_STOP") {
+        if(safetymode != lastSafetyMode) {
+          packml_msgs::Transition srv;
+          srv.request.command = STOP;
+          transitionClient.call(srv);
+        }
+        blue_blink = !blue_blink;
       }
-      blue_blink = !blue_blink;
+      else {
+        if(lastSafetyMode == "Safetymode: SAFEGUARD_STOP") {
+          packml_msgs::Transition srv;
+          srv.request.command = RESET;
+          transitionClient.call(srv);
+          ros::Duration(0.5).sleep();
+          srv.request.command = START;
+          transitionClient.call(srv);
+        }
+        blue_blink = false;
+      }
     }
     else {
-      if(lastSafetyMode == "Safetymode: SAFEGUARD_STOP") {
-        packml_msgs::Transition srv;
-        srv.request.command = RESET;
-        transitionClient.call(srv);
-        ros::Duration(0.5).sleep();
-        srv.request.command = START;
-        transitionClient.call(srv);
+      if(safetymode == "Safetymode: SAFEGUARD_STOP") {
+        blue_blink = !blue_blink;
       }
-      blue_blink = false;
+      else {
+        blue_blink = false;
+      }
     }
+
 
     io_interface->setStandardDigitalOut(5, blue_blink ? 1 : 0);
 

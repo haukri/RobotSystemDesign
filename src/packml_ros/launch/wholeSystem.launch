@@ -6,4 +6,5 @@
   <node name="mir_robot" pkg="mir_robot" type="mirRobot.js" />
   <node name="user_interface" pkg="user_interface" type="server.js" />
   <node name="modbus_client" pkg="pymodbus_client" type="modbus_client.py" />
+  <node name="main_control" pkg="main_control" type="main_control.py" />
 </launch>

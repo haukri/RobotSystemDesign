@@ -25,6 +25,7 @@ packmlState = 2
 stateChangeQueue = Queue()
 robotReady = True
 mirReady = False
+mirCalled = False
 newOrder = 0
 completeOrder = 0
 feederCheck = 0
@@ -117,6 +118,9 @@ def getNextBrick():
 def orderDone():
     return currentOrder.blue_amount == 0 and currentOrder.red_amount == 0 and currentOrder.yellow_amount == 0
 
+def feederHasBricksForOrder():
+    return feederStatus.blue_amount >= 4 + currentOrder.blue_amount and feederStatus.red_amount >= currentOrder.red_amount + 3 and feederStatus.yellow_amount >= currentOrder.yellow_amount + 2
+
 
 def loadBinNumber():
     global binNumber
@@ -142,7 +146,7 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirCalled, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if packmlState == EXECUTE:
@@ -160,6 +164,8 @@ def publisher():
                 currentOrder = newOrder()
                 goodOrder = True
                 substate = 10
+                if binNumber == 4 and feederHasBricksForOrder():
+                    callMir()
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
                     if feederIsEmpty():
@@ -167,7 +173,7 @@ def publisher():
                         msg = String()
                         feederEmptyPub.publish(msg)
                         feederStatus.empty = True
-                        sendPushNotification('Feeder is empty! please refill the feeder')
+                        # sendPushNotification('Feeder is empty! please refill the feeder')
                         substate = 13
                     else:
                         currentRobotCmd = RobotCmd()
@@ -181,9 +187,10 @@ def publisher():
                     message = "10: Order done"
                     substate = 0
                     completeOrder(currentOrder.order_number)
-                    if(binNumber == 4):     # If all bins have been packed, call MiR robot for pickup
-                        substate = 30
+                    if binNumber == 4:     # If all bins have been packed, call MiR robot for pickup
                         binNumber = 1
+                        callMir()
+                        substate = 40
                     else:
                         binNumber = binNumber + 1
                     # saveBinNumber()
@@ -251,12 +258,6 @@ def publisher():
                 if robotReady:
                     message = "20: Packing brick done"
                     substate = 10
-            elif substate == 30:            # Call MiR robot for pickup
-                message = "30: Call MiR robot for pickup"
-                msg = String()
-                callMirPub.publish(msg)
-                mirReady = False
-                substate = 40
             elif substate == 40:            
                 message = "40: Wait for MiR to arrive"
                 if mirReady:
@@ -306,6 +307,7 @@ def publisher():
                 message = "110: Request MiR to go away"
                 msg = String()
                 releaseMirPub.publish(msg)
+                mirCalled = False
                 substate = 0
 
         elif packmlState == SUSPENDED:
@@ -324,6 +326,15 @@ def publisher():
         publishStatus()
         r.sleep()
 
+
+def callMir():
+    global message, callMirPub, mirReady, mirCalled
+    if not mirCalled:
+        message = "30: Call MiR robot for pickup"
+        msg = String()
+        callMirPub.publish(msg)
+        mirReady = False
+        mirCalled = True
 
 def suspendMachine():
     packmlTransitionCommand(100)
