@@ -23,6 +23,8 @@ const rosnodejs = require('rosnodejs');
 const request = require('request');
 const storage = require('node-persist');
 
+var lastPackmlState = 0;
+
 var orderStatusPub;
 var lastLogEvent = "";
 
@@ -74,9 +76,10 @@ async function orderSystem() {
       orderStatusPub = rosNode.advertise('/order_status', 'order_msgs/OrderStatus');
 
       rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
-        if(packMLStates[msg.state.val]) {
+        if(packMLStates[msg.state.val] && msg.state.val != lastPackmlState) {
           postLog(10, packMLStates[msg.state.val], '');
         }
+        lastPackmlState = msg.state.val;
       });
 
     });
