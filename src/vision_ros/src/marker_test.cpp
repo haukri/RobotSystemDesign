@@ -30,7 +30,8 @@ int main(int argc, char** argv)
       if(i==1) {
         groundTruth = corners[0][0];
       }
-      cout << corners[0][0] - groundTruth << endl;
+      cout << corners[0][0] << endl;
+      //cout << corners[0][0] - groundTruth << endl;
       // if at least one marker detected
       if (ids.size() > 0) {
           cv::aruco::drawDetectedMarkers(imageCopy, corners, ids);
