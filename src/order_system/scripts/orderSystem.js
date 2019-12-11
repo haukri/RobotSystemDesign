@@ -36,31 +36,17 @@ async function orderSystem() {
 
       const service = rosNode.advertiseService('/new_order', 'order_msgs/NewOrder', (req, res) => {
         return new Promise(async function(resolve, reject) {
-          var currentOrderID = await storage.getItem('current_order');
-          if(currentOrderID >= 0) {
-            console.log('Found an unfinished order!');
-            var currentOrder = await storage.getItem(String(currentOrderID));
-            console.log(currentOrder);
-            orderStatusPub.publish({ order_number: currentOrder.id, yellow_amount: currentOrder.yellow, red_amount: currentOrder.red, blue_amount: currentOrder.blue });
-            res.order_number = currentOrder.id;
-            res.yellow_amount = currentOrder.yellow;
-            res.red_amount = currentOrder.red;
-            res.blue_amount = currentOrder.blue;
+          getNewOrder((newOrder) => {
+            orderStatusPub.publish({ order_number: newOrder.id, yellow_amount: newOrder.yellow, red_amount: newOrder.red, blue_amount: newOrder.blue });
+            console.log('Got new order from server');
+            console.log(newOrder);
+            res.order_number = newOrder.id;
+            res.yellow_amount = newOrder.yellow;
+            res.red_amount = newOrder.red;
+            res.blue_amount = newOrder.blue;
+            postLog(10, 'Order_Start', 'order ' + newOrder.id);
             resolve(true);
-          }
-          else {
-            getNewOrder((newOrder) => {
-              orderStatusPub.publish({ order_number: newOrder.id, yellow_amount: newOrder.yellow, red_amount: newOrder.red, blue_amount: newOrder.blue });
-              console.log('Got new order from server');
-              console.log(newOrder);
-              res.order_number = newOrder.id;
-              res.yellow_amount = newOrder.yellow;
-              res.red_amount = newOrder.red;
-              res.blue_amount = newOrder.blue;
-              postLog(10, 'Order_Start', 'order ' + newOrder.id);
-              resolve(true);
-            });
-          }
+          });
         });
       });
 
@@ -104,11 +90,9 @@ async function completeOrder(orderID, callback) {
       //  'Accept-Charset': 'utf-8'
       //}
     };
-    await storage.setItem('current_order', -1);
     callback(true);
     request(options, async function(err, res, body) {
       if(res.statusCode === 204) {
-        await storage.setItem('current_order', -1);
         callback(true);
       }
       else {
@@ -182,7 +166,6 @@ function requestOrder(order, callback)  {
       storedOrder.ticket = json.ticket;
       storedOrder.maxDeleteAttempts = 10;
       await storage.setItem(String(order.id), storedOrder);
-      await storage.setItem('current_order', order.id);
       callback(storedOrder);
     }
     else {
@@ -203,7 +186,7 @@ function postLog(cell_id, event, comment) {
         comment: comment
       }
     }, function(error, response, body){
-      if(response.statusCode == 201) {
+      if(response && response.statusCode == 201) {
         console.log('Event logged');
       }
     });

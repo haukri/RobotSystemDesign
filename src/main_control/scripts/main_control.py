@@ -30,6 +30,7 @@ newOrder = 0
 completeOrder = 0
 feederCheck = 0
 currentOrder = 0
+takenOrders = []
 substate = 0
 binNumber = 1
 currentRobotCmd = 0
@@ -122,22 +123,6 @@ def feederHasBricksForOrder():
     return feederStatus.blue_amount >= 4 + currentOrder.blue_amount and feederStatus.red_amount >= currentOrder.red_amount + 3 and feederStatus.yellow_amount >= currentOrder.yellow_amount + 2
 
 
-def loadBinNumber():
-    global binNumber
-    if os.path.exists('binNumber.json'):
-        with open('binNumber.json', 'r') as f:
-            content = f.read()
-            if(content != ""):
-                data = json.loads(content)
-                # binNumber = data[0]
-                binNumber = 0
-
-
-def saveBinNumber():
-    with open('binNumber.json', 'w+') as f:
-        f.write(json.dumps([binNumber]))
-
-
 def deleteOrder():
     with open('currentOrder.json', 'w+') as f:
         f.write('')
@@ -146,7 +131,7 @@ def deleteOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, mirCalled, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirCalled, takenOrders, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if packmlState == EXECUTE:
@@ -162,6 +147,7 @@ def publisher():
             elif substate == 1:
                 message = "0: New order"
                 currentOrder = newOrder()
+                takenOrders.append(currentOrder)
                 goodOrder = True
                 substate = 10
                 if binNumber == 4 and feederHasBricksForOrder():
@@ -186,14 +172,15 @@ def publisher():
                 else:
                     message = "10: Order done"
                     substate = 0
-                    completeOrder(currentOrder.order_number)
                     if binNumber == 4:     # If all bins have been packed, call MiR robot for pickup
                         binNumber = 1
                         callMir()
+                        for order in takenOrders:    
+                            completeOrder(order.order_number)
+                        takenOrders = []
                         substate = 40
                     else:
                         binNumber = binNumber + 1
-                    # saveBinNumber()
                     deleteOrder()
                     if goodOrder:
                         publishGoodOrder()
