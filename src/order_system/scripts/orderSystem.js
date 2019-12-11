@@ -26,7 +26,8 @@ const storage = require('node-persist');
 var orderStatusPub;
 var lastLogEvent = "";
 
-var ipAddress = "10.10.19.20";
+// var ipAddress = "10.10.19.20";
+var ipAddress = "127.0.0.1:5000";
 
 async function orderSystem() {
 

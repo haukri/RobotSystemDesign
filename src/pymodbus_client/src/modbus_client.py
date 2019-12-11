@@ -4,6 +4,7 @@ from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.register_read_message import ReadHoldingRegistersResponse
 from pymodbus_client.srv import mir_check, mir_checkResponse, feeder_srv, feeder_srvResponse
 
+simulation = True
 
 def feeder_check(req):
     srv = feeder_srvResponse()
@@ -20,10 +21,16 @@ def feeder_check(req):
         srv.blue = coil_b.bits[0]
         srv.missing = coil_m.bits[0]
     except:
-        srv.yellow = 0
-        srv.red = 0
-        srv.blue = 0
-        srv.missing = 1
+        if simulation:
+            srv.yellow = 1
+            srv.red = 1
+            srv.blue = 1
+            srv.missing = 0
+        else:
+            srv.yellow = 0
+            srv.red = 0
+            srv.blue = 0
+            srv.missing = 1
 
     return srv
 
@@ -41,9 +48,14 @@ def mir_callback(req):
         srv.y = y.registers[0] - 128
         srv.marker_found = marker_found.bits[0]
     except:
-        srv.x = 0
-        srv.y = 0
-        srv.marker_found = 0
+        if simulation:
+            srv.x = 0
+            srv.y = 0
+            srv.marker_found = 1
+        else:
+            srv.x = 0
+            srv.y = 0
+            srv.marker_found = 0
 
     return srv
 

@@ -23,6 +23,7 @@ const rosnodejs = require('rosnodejs');
 const request = require('request');
 
 var mirStatusPub;
+var simulation = true;
 
 async function mirRobot() {
 
@@ -57,19 +58,24 @@ function postMission(callback) {
     url: 'http://10.10.19.42:8080/v2.0.0/mission_queue',
     body: '{"mission_id": "e9d454d1-11c6-11ea-97b2-94c691159b76"}'
   }, function(error, response, body){
-    if(response.statusCode == 201) {
-      let missionInfo = JSON.parse(body);
-      var interval = setInterval(function() {
-        getRegister((value) => {
-          if (value > 0) {
-            clearInterval(interval);
-            callback();
-          }
-          else {
-            console.log("Waiting for MIR to arrive");
-          }
-        })
-      }, 1000);
+    if(!error) {
+      if(response.statusCode == 201) {
+        let missionInfo = JSON.parse(body);
+        var interval = setInterval(function() {
+          getRegister((value) => {
+            if (value > 0) {
+              clearInterval(interval);
+              callback();
+            }
+            else {
+              console.log("Waiting for MIR to arrive");
+            }
+          })
+        }, 1000);
+      }
+    } 
+    else if(simulation) {
+      callback();
     }
   });
 }
@@ -98,7 +104,12 @@ function setRegister(callback) {
     url: 'http://10.10.19.42:8080/v2.0.0/registers/10',
     body: '{"value": 0}'
   }, function(error, response, body){
-    if(response.statusCode == 200) {
+    if(!error) {
+      if(response.statusCode == 200) {
+        callback();
+      }
+    }
+    else if(simulation) {
       callback();
     }
   });

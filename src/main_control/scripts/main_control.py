@@ -32,7 +32,7 @@ feederCheck = 0
 currentOrder = 0
 takenOrders = []
 substate = 0
-binNumber = 1
+binNumber = 3
 currentRobotCmd = 0
 lastState = 0
 bricksValid = 0
@@ -119,15 +119,9 @@ def getNextBrick():
 def orderDone():
     return currentOrder.blue_amount == 0 and currentOrder.red_amount == 0 and currentOrder.yellow_amount == 0
 
+
 def feederHasBricksForOrder():
     return feederStatus.blue_amount >= 4 + currentOrder.blue_amount and feederStatus.red_amount >= currentOrder.red_amount + 3 and feederStatus.yellow_amount >= currentOrder.yellow_amount + 2
-
-
-def deleteOrder():
-    with open('currentOrder.json', 'w+') as f:
-        f.write('')
-    with open('binNumber.json', 'w+') as f:
-        f.write(json.dumps([binNumber]))
 
 
 def publisher():
@@ -181,7 +175,6 @@ def publisher():
                         substate = 40
                     else:
                         binNumber = binNumber + 1
-                    deleteOrder()
                     if goodOrder:
                         publishGoodOrder()
                     else:
