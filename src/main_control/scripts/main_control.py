@@ -208,7 +208,12 @@ def publisher():
                         substate = 12
                     else:
                         message = "11: Camera could not find bricks"
-                        substate = 10
+                        suspendMachine()
+                        msg = String()
+                        feederEmptyPub.publish(msg)
+                        feederStatus.empty = True
+                        # sendPushNotification('Feeder is empty! please refill the feeder')
+                        substate = 13
             elif substate == 12:
                 if not bricksValid.red:
                     bricksValid.red = True

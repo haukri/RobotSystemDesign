@@ -26,6 +26,8 @@ const storage = require('node-persist');
 var orderStatusPub;
 var lastLogEvent = "";
 
+var ipAddress = "10.10.19.20";
+
 async function orderSystem() {
 
   await storage.init();
@@ -97,7 +99,7 @@ async function completeOrder(orderID, callback) {
   var currentOrder = await storage.getItem(String(orderID));
   if(currentOrder) {
     var options = {
-      url: 'http://127.0.0.1:5000/orders/' + String(orderID) + '/' + currentOrder.ticket,
+      url: 'http://' + ipAddress + '/orders/' + String(orderID) + '/' + currentOrder.ticket,
       method: 'DELETE',
       //headers: {
       //  'Accept': 'application/json',
@@ -136,7 +138,7 @@ async function completeOrder(orderID, callback) {
 
 function getNewOrder(callback) {
   var options = {
-    url: 'http://127.0.0.1:5000/orders',
+    url: 'http://' + ipAddress +'/orders',
     method: 'GET',
     //headers: {
     //  'Accept': 'application/json',
@@ -168,7 +170,7 @@ function getNewOrder(callback) {
 
 function requestOrder(order, callback)  {
   let options = {
-    url: 'http://127.0.0.1:5000/orders/' + String(order.id),
+    url: 'http://' + ipAddress + '/orders/' + String(order.id),
     method: 'PUT',
   };
   request(options, async function(err, res, body) {
@@ -195,7 +197,7 @@ function requestOrder(order, callback)  {
 function postLog(cell_id, event, comment) {
   if(event != lastLogEvent) {
     request.post({
-      url: 'http://127.0.0.1:5000/log',
+      url: 'http://' + ipAddress + '/log',
       json: true,
       body: {
         cell_id: cell_id,
