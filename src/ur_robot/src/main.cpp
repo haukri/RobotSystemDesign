@@ -22,6 +22,7 @@
 #define SUSPENDING 101
 #define UNSUSPENDING 102
 #define UNHOLDING 104
+#define HELD 11
 
 #define START 2
 #define STOP 3
@@ -56,7 +57,8 @@ int packMLState = 0;
 
 const double theta = -0.39;
 
-std::string robot_ip = "192.168.1.10";
+// std::string robot_ip = "192.168.1.10";
+std::string robot_ip = "192.168.56.102";
 
 std::vector<double> jointq_pick_red = {-1.76932, -2.24, -2.37864, 0.610792, 1.44958, 0.167349};
 std::vector<double> jointq_pick_red_over = {-1.72418, -2.1051, -2.53606, 0.642339, 1.39204, 0.167397 };
@@ -616,12 +618,11 @@ int main(int argc, char **argv)
   s.start();
 
   bool blue_blink = false;
-  string lastSafetyMode = "";
+  string lastSafetyMode = dashboard_client->safetymode();
 
   while(ros::ok()) {
     string safetymode = dashboard_client->safetymode();
-    string robotmode = dashboard_client->robotmode();
-    if (packMLState != SUSPENDED) {
+    if (packMLState != SUSPENDED || packMLState != HELD) {
       if(safetymode == "Safetymode: SAFEGUARD_STOP") {
         if(safetymode != lastSafetyMode) {
           packml_msgs::Transition srv;
@@ -651,16 +652,7 @@ int main(int argc, char **argv)
       }
     }
 
-
     io_interface->setStandardDigitalOut(5, blue_blink ? 1 : 0);
-
-    if (!(safetymode == "Safetymode: NORMAL" || safetymode == "Safetymode: REDUCED" || safetymode == "Safetymode: RECOVERY")) {
-      // cout << "resetting safety" << endl;
-      // dashboard_client->restartSafety();
-      // dashboard_client->closeSafetyPopup();
-    }
-    // cout << dashboard_client->safetymode() << endl;
-    // cout << dashboard_client->robotmode() << endl;
     
     lastSafetyMode = safetymode;
     ros::Duration(0.5).sleep();
