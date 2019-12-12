@@ -4,7 +4,8 @@ from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.register_read_message import ReadHoldingRegistersResponse
 from pymodbus_client.srv import mir_check, mir_checkResponse, feeder_srv, feeder_srvResponse
 
-simulation = True
+simulation = False
+client = 0
 
 def feeder_check(req):
     srv = feeder_srvResponse()
@@ -15,7 +16,6 @@ def feeder_check(req):
         coil_b = client.read_coils(2,1)
         coil_m = client.read_coils(3,1)
         client.close()
-
         srv.yellow = coil_y.bits[0]
         srv.red = coil_r.bits[0]
         srv.blue = coil_b.bits[0]
@@ -38,11 +38,9 @@ def feeder_check(req):
 def mir_callback(req):
     srv = mir_checkResponse()
     try:
-        client = ModbusTcpClient('192.168.1.202', 5020)
         x = client.read_holding_registers(0,1)
         y = client.read_holding_registers(1,1)
         marker_found = client.read_coils(4,1)
-        client.close()
 
         srv.x = x.registers[0] - 128
         srv.y = y.registers[0] - 128
@@ -61,11 +59,15 @@ def mir_callback(req):
 
 
 def feeder_server():
+    global client
     rospy.init_node('modbus_client')
+    client = ModbusTcpClient('192.168.1.202', 5020)
     s = rospy.Service('feeder_check', feeder_srv, feeder_check)
     r = rospy.Service('mir_check', mir_check, mir_callback)
     print("Ready")
     rospy.spin()
+    print("Done")
+    client.close()
 
 
 if __name__ == "__main__":

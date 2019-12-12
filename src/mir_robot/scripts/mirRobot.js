@@ -23,7 +23,7 @@ const rosnodejs = require('rosnodejs');
 const request = require('request');
 
 var mirStatusPub;
-var simulation = true;
+var simulation = false;
 
 var commonHeader = {
   'Content-Type': 'application/json',
@@ -43,10 +43,8 @@ async function mirRobot() {
         });
       });
 
-      const releaseMIRSub = rosNode.subscribe('/release_mir', 'std_msgs/String', (msg) => {
-        setRegister(10, 0, () => {
-          console.log("MIR released!");
-        })
+      const releaseMIRSub = rosNode.subscribe('/release_mir', 'std_msgs/String', async (msg) => {
+        setRegister(12, 0);
       });
 
       mirStatusPub = rosNode.advertise('/mir_arrived', 'std_msgs/String');
@@ -69,13 +67,12 @@ async function mirRobot() {
           resolve(true);
         });
       });
-
     });
 }
 
 async function mirDoneCharging() {
-  var doneRecharging = await getRegister(91);
-  return doneRecharging;
+  var doneRecharging = await getRegister(90);
+  return !doneRecharging;
 }
 
 async function checkMirBattery() {
@@ -84,15 +81,17 @@ async function checkMirBattery() {
   var group11 = await getRegister(21);
   var group12 = await getRegister(31);
   var shouldCharge = await getRegister(90);
-  var doneRecharging = await getRegister(91);
 
   if(shouldCharge) {
     if(group9 && group11 && group12) {
       await postNewMission("missionID");
     }
-    return true;
+    await setRegister(11, 1);
+    return true
   }
-  return false;
+  else {
+    return false;
+  }
 }
 
 async function postNewMission(missionID) {
@@ -117,7 +116,7 @@ function postMission(callback) {
       if(response.statusCode == 201) {
         let missionInfo = JSON.parse(body);
         var interval = setInterval(async function() {
-          var value = await getRegister(10);
+          var value = await getRegister(12);
           if (value > 0) {
             clearInterval(interval);
             callback();
@@ -153,21 +152,23 @@ async function getRegister(registerNumber) {
   })
 }
 
-function setRegister(registerNumber, value, callback) {
-  request.post({
-    headers: commonHeader,
-    url: 'http://10.10.19.42:8080/v2.0.0/registers/' + registerNumber,
-    body: '{"value": ' + value + '}'
-  }, function(error, response, body){
-    if(!error) {
-      if(response.statusCode == 200) {
-        callback();
+async function setRegister(registerNumber, value) {
+  return new Promise((resolve, reject) => {
+    request.post({
+      headers: commonHeader,
+      url: 'http://10.10.19.42:8080/v2.0.0/registers/' + registerNumber,
+      body: '{"value": ' + value + '}'
+    }, function(error, response, body){
+      if(!error) {
+        if(response.statusCode == 200) {
+          resolve();
+        }
       }
-    }
-    else if(simulation) {
-      callback();
-    }
-  });
+      else if(simulation) {
+        resolve();
+      }
+    });
+  })
 }
 
 if (require.main === module) {

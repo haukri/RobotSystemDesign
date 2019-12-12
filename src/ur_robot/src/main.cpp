@@ -57,8 +57,8 @@ int packMLState = 0;
 
 const double theta = -0.39;
 
-// std::string robot_ip = "192.168.1.10";
-std::string robot_ip = "192.168.56.102";
+std::string robot_ip = "192.168.1.10";
+//std::string robot_ip = "192.168.56.102";
 
 std::vector<double> jointq_pick_red = {-1.76932, -2.24, -2.37864, 0.610792, 1.44958, 0.167349};
 std::vector<double> jointq_pick_red_over = {-1.72418, -2.1051, -2.53606, 0.642339, 1.39204, 0.167397 };

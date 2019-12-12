@@ -32,7 +32,7 @@ feederCheck = 0
 currentOrder = 0
 takenOrders = []
 substate = 0
-binNumber = 3
+binNumber = 1
 currentRobotCmd = 0
 lastState = 0
 bricksValid = 0
@@ -181,7 +181,7 @@ def publisher():
                         publishBadOrder()
             elif substate == 11:            # Discard all bricks that are not valid
                 if robotReady:
-                    rospy.sleep(0.5)
+                    rospy.sleep(0.2)
                     bricksValid = feederCheck()
                     if not bricksValid.missing:
                         hasDiscardedBricks = False
