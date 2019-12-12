@@ -80,7 +80,7 @@ async function checkMirBattery() {
   var group10 = await getRegister(11);
   var group11 = await getRegister(21);
   var group12 = await getRegister(31);
-  var shouldCharge = await getRegister(90);
+  var shouldCharge = await getRegister(89);
 
   if(shouldCharge) {
     if(group9 && group11 && group12) {

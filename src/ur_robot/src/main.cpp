@@ -60,14 +60,14 @@ const double theta = -0.39;
 std::string robot_ip = "192.168.1.10";
 //std::string robot_ip = "192.168.56.102";
 
-std::vector<double> jointq_pick_red = {-1.76932, -2.24, -2.37864, 0.610792, 1.44958, 0.167349};
-std::vector<double> jointq_pick_red_over = {-1.72418, -2.1051, -2.53606, 0.642339, 1.39204, 0.167397 };
+std::vector<double> jointq_pick_red = {-1.75865, -2.23298, -2.38017, 0.614899, 1.43263, 0.173547};
+std::vector<double> jointq_pick_red_over = {-1.73714, -2.0378, -2.50988, 0.547078, 1.41828, 0.190538 };
 
-std::vector<double> jointq_pick_blue = {-1.93548, -2.22668, -2.33629, 0.532674, 1.56827, 0.00825453};
-std::vector<double> jointq_pick_blue_over = {-1.92394, -1.99632, -2.45521, 0.401373, 1.54834, 0.00825453};
+std::vector<double> jointq_pick_blue = {-1.9201, -2.24168, -2.34875, 0.601874, 1.53917, 0.0517993};
+std::vector<double> jointq_pick_blue_over = {-1.9143, -2.00549, -2.49679, 0.513568, 1.53502, 0.0567656};
 
-std::vector<double> jointq_pick_yellow = {-1.59469, -2.24166, -2.39459, 0.608003, 1.32264, 0.291706 };
-std::vector<double> jointq_pick_yellow_over = {-1.55849, -2.1221, -2.53371, 0.652527, 1.30927, 0.291958};
+std::vector<double> jointq_pick_yellow = {-1.59088, -2.2242, -2.39034, 0.592021, 1.32403, 0.304082 };
+std::vector<double> jointq_pick_yellow_over = {-1.53716, -1.98872, -2.54036, 0.495313, 1.28977, 0.347804};
 
 std::vector<double> jointq_pick_midpoint = {-1.30838, -1.17342, -2.32572, -1.19639, 1.57305, 0.623872};
 std::vector<double> jointq_feeder_midpoint = {-1.79356, -1.6487, -2.31727, -0.704819, 1.58955, 0.122001};
@@ -91,6 +91,13 @@ std::vector<double> jointq_discard_bin = {-2.17897, -1.86781, -2.01717, -0.82959
 
 // std::vector<double> jointq_dropoff_bins_34 = {-0.204672, -1.67169, -2.54603, -0.510077, 1.54498, -1.40419};
 // std::vector<double> jointq_dropoff_bins_34_over = {-0.204995, -1.51274, -2.49631, -0.718729, 1.54574, -1.40397};
+
+
+std::vector<double> jointq_empty_boxes_over = {-1.94221, -1.8712, -2.29998, -0.0404251, 0.49929, 1.14869};
+std::vector<double> jointq_empty_boxes = {-1.9239, -2.17945, -2.30483, 0.00655763, -0.592689, 1.33838};
+std::vector<double> jointq_empty_boxes_right = {-1.92394, -2.17946, -2.30478, 0.203775, -0.592676, 1.5436};
+std::vector<double> jointq_empty_boxes_left = {-1.92389, -2.17946, -2.30482, 0.0157229, -0.596268, 0.432159};
+
 
 std::vector<double> jointq_mir_camera = {1.1203, -1.76657, -1.66757, -2.81709, 1.54344, -0.037145};
 std::vector<double> jointq_mir_midpoint = {-0.447611, -1.34799, -2.00223, -1.3087, 1.5398, -0.0375159};
@@ -493,6 +500,34 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     status.ready = true;
     robot_status_pub.publish(status);
   }
+  else if(cmd->command == "empty-test") {
+    
+    moveJ(jointq_mir_midpoint, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_midpoint, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_over, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+  }
+    else if(cmd->command == "red-test") {
+    io_interface->setStandardDigitalOut(4, 1);
+    
+    moveJ(jointq_feeder_midpoint, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_red_over, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_red, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+  }
   else if (cmd->command == "move-boxes-from-mir") {
     io_interface->setStandardDigitalOut(4, 1);
     moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_high, pose_acceleration_high);
@@ -506,6 +541,30 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     ros::Duration(gripping_time).sleep();
 
     moveLinear(offsetPose(pose_mir_bins_12_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_midpoint, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_over, joint_velocity_high, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_right, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_over, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_midpoint, joint_velocity_high, joint_acceleration_low);
     if(robotStopped)
       return;
     moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
@@ -537,6 +596,30 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     ros::Duration(gripping_time).sleep();
 
     moveLinear(offsetPose(pose_mir_bins_34_over, cmd->x_offset, cmd->y_offset), pose_velocity_low, pose_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_midpoint, joint_velocity_high, joint_acceleration_high);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_over, joint_velocity_high, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_right, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_empty_boxes_over, joint_velocity_low, joint_acceleration_low);
+    if(robotStopped)
+      return;
+    moveJ(jointq_pick_midpoint, joint_velocity_high, joint_acceleration_low);
     if(robotStopped)
       return;
     moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
@@ -622,7 +705,7 @@ int main(int argc, char **argv)
 
   while(ros::ok()) {
     string safetymode = dashboard_client->safetymode();
-    if (packMLState != SUSPENDED || packMLState != HELD) {
+    if (packMLState != SUSPENDED && packMLState != HELD) {
       if(safetymode == "Safetymode: SAFEGUARD_STOP") {
         if(safetymode != lastSafetyMode) {
           packml_msgs::Transition srv;
