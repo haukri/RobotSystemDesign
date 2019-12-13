@@ -26,6 +26,8 @@
 
 ros::Publisher robot_stop_pub;
 
+bool urRobotStateChange = false;
+
 int myExecuteMethod()
 {
   ROS_INFO_STREAM("This is my execute method(begin)");
@@ -95,6 +97,16 @@ int myStartingMethod()
   return 0;  // returning zero indicates non-failure
 }
 
+int stoppingAbortingSuspendingHoldingMethod()
+{
+  ROS_INFO_STREAM("Aborting");
+  while(!urRobotStateChange) {
+    ros::Duration(0.1).sleep();
+  }
+  urRobotStateChange = false;
+  return 0;  // returning zero indicates non-failure
+}
+
 int mySuspendedMethod() {
   ROS_INFO_STREAM("This is my suspended method(begin)");
   ros::Duration(1.0).sleep();
@@ -102,14 +114,27 @@ int mySuspendedMethod() {
   return 0;  // returning zero indicates non-failure
 }
 
+void stateChangeCallback(const std_msgs::String::ConstPtr& msg)
+{
+  if(msg->data == "ur_robot") {
+    urRobotStateChange = true;
+  }
+}
+
 int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "packml_node");
   ros::NodeHandle n;
 
+  ros::Subscriber sub = n.subscribe("packml_state_change", 10, stateChangeCallback);
+
   auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
+  sm->setAborting(std::bind(stoppingAbortingSuspendingHoldingMethod));
+  sm->setStopping(std::bind(stoppingAbortingSuspendingHoldingMethod));
+  sm->setHolding(std::bind(stoppingAbortingSuspendingHoldingMethod));
+  sm->setSuspending(std::bind(stoppingAbortingSuspendingHoldingMethod));
   sm->setIdealCycleTime(30.0);
   // sm->setSuspended(std::bind(mySuspendedMethod));
   packml_ros::PackmlRos sm_node(ros::NodeHandle(), ros::NodeHandle("~"), sm);

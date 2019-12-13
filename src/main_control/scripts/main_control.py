@@ -7,6 +7,7 @@ from std_msgs.msg import String
 from pymodbus_client.srv import feeder_srv, mir_check
 from packml_msgs.msg import Status
 from packml_msgs.srv import Transition
+from std_srvs.srv import SetBool
 import threading
 import json
 from Queue import Queue
@@ -46,6 +47,9 @@ lastMessage = ""
 goodOrder = True
 packmlTransitionCommand = 0
 mirOffsets = 0
+mirChargingDone = 0
+mirShouldCharge = 0
+mirMissionStarted = 0
 
 feederStatus = type('', (), {})()
 feederStatus.max_yellow_amount = 13
@@ -125,7 +129,7 @@ def feederHasBricksForOrder():
 
 
 def publisher():
-    global packmlState, currentOrder, mirCalled, takenOrders, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
+    global packmlState, currentOrder, mirChargingDone, mirMissionStarted, mirShouldCharge, mirCalled, takenOrders, mirReady, mirOffsets, callMirPub, releaseMirPub, message, goodOrder, feederStatus, hasDiscardedBricks, bricksValid, feederCheck, robotReady, newOrder, completeOrder, binNumber, substate, currentRobotCmd, stateChangeQueue
     r = rospy.Rate(10)
     while not rospy.is_shutdown():
         if packmlState == EXECUTE:
@@ -137,7 +141,13 @@ def publisher():
 
         if packmlState == EXECUTE:
             if substate == 0:
-                substate = 1
+                message = "Check if MiR should charge"
+                msg = mirShouldCharge()
+                if msg.success:
+                    substate = 5
+                else:
+                    callMir()
+                    substate = 4
             elif substate == 1:
                 message = "0: New order"
                 currentOrder = newOrder()
@@ -145,7 +155,22 @@ def publisher():
                 goodOrder = True
                 substate = 10
                 if binNumber == 4 and feederHasBricksForOrder():
-                    callMir()
+                    pass
+                    # callMir()
+            elif substate == 4:
+                message = "4: Wait for MiR to start mission"
+                msg = mirMissionStarted()
+                if msg.success:
+                    substate = 1
+                else:
+                    rospy.sleep(1)
+            elif substate == 5:
+                message = "5: Wait for MiR to finish charging"
+                msg = mirChargingDone()
+                if msg.success:
+                    substate = 0
+                else:
+                    rospy.sleep(1)
             elif substate == 10:             # Command robot for next brick
                 if not orderDone():
                     if feederIsEmpty():
@@ -165,10 +190,10 @@ def publisher():
                         substate = 11
                 else:
                     message = "10: Order done"
-                    substate = 0
+                    substate = 1
                     if binNumber == 4:     # If all bins have been packed, call MiR robot for pickup
                         binNumber = 1
-                        callMir()
+                        # callMir()
                         for order in takenOrders:    
                             completeOrder(order.order_number)
                         takenOrders = []
@@ -356,7 +381,7 @@ def publishGoodOrder():
 
 
 def listener():
-    global robotCommandPub, feederCheck, callMirPub, mirPositionOffset, releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
+    global robotCommandPub, mirShouldCharge, mirMissionStarted, mirChargingDone, feederCheck, callMirPub, mirPositionOffset, releaseMirPub, feederEmptyPub, packmlTransitionCommand, mainStatusPub, newOrder, completeOrder, feederCheck, oeeCommandsPub
 
     robotCommandPub = rospy.Publisher('robot_command_new', RobotCmd, queue_size=10)
     mainStatusPub = rospy.Publisher('main_control_status', String, queue_size=10)
@@ -377,12 +402,18 @@ def listener():
     rospy.wait_for_service('feeder_check')
     rospy.wait_for_service('mir_check')
     rospy.wait_for_service('packml_node/packml/transition')
+    rospy.wait_for_service('mir_should_charge')
+    rospy.wait_for_service('mir_charging_done')
+    rospy.wait_for_service('mir_mission_started')
 
     newOrder = rospy.ServiceProxy('new_order', NewOrder)
     completeOrder = rospy.ServiceProxy('complete_order', CompleteOrder)
     feederCheck = rospy.ServiceProxy('feeder_check', feeder_srv)
     mirPositionOffset = rospy.ServiceProxy('mir_check', mir_check)
     packmlTransitionCommand = rospy.ServiceProxy('packml_node/packml/transition', Transition)
+    mirShouldCharge = rospy.ServiceProxy('mir_should_charge', SetBool)
+    mirChargingDone = rospy.ServiceProxy('mir_charging_done', SetBool)
+    mirMissionStarted = rospy.ServiceProxy('mir_mission_started', SetBool)
 
     thread = threading.Thread(target=publisher)
     thread.start()

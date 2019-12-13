@@ -37,6 +37,7 @@ async function mirRobot() {
     .then((rosNode) => {
 
       const callMIRSub = rosNode.subscribe('/call_mir', 'std_msgs/String', (msg) => {
+        setRegister(13, 0);
         postMission(() => {
           console.log("MIR arrived!");
           mirStatusPub.publish({data: ''});
@@ -58,6 +59,13 @@ async function mirRobot() {
         });
       });
 
+      const mirMissionService = rosNode.advertiseService('/mir_mission_started', 'std_srvs/SetBool', (req, res) => {
+        return new Promise(async function(resolve, reject) {
+          res.success = await getRegister(13);;
+          res.message = "success";
+          resolve(true);
+        });
+      });
 
       const mirDoneService = rosNode.advertiseService('/mir_charging_done', 'std_srvs/SetBool', (req, res) => {
         return new Promise(async function(resolve, reject) {
@@ -77,16 +85,16 @@ async function mirDoneCharging() {
 
 async function checkMirBattery() {
   var group9 = await getRegister(1);
-  var group10 = await getRegister(11);
   var group11 = await getRegister(21);
   var group12 = await getRegister(31);
   var shouldCharge = await getRegister(89);
 
   if(shouldCharge) {
-    if(group9 && group11 && group12) {
-      await postNewMission("missionID");
-    }
     await setRegister(11, 1);
+    await setRegister(90, 1);
+    if(group9 && group11 && group12) {
+      await postNewMission("94acb9cb-1a6d-11ea-845d-94c691159b76");
+    }
     return true
   }
   else {
