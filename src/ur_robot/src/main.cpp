@@ -573,19 +573,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_empty_boxes_right, joint_velocity_low, joint_acceleration_low);
+    moveJ(jointq_empty_boxes_right, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
+    moveJ(jointq_empty_boxes_left, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     moveJ(jointq_empty_boxes_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     moveJ(jointq_pick_midpoint, joint_velocity_low, joint_acceleration_low);
-    if(robotStopped)
-      return;
-    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     moveJ(jointq_dropoff_box_feeder_over, joint_velocity_high, joint_acceleration_high);
@@ -628,19 +625,16 @@ void robotCommandCallback(const robot_msgs::RobotCmd::ConstPtr& cmd) {
     moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
-    moveJ(jointq_empty_boxes_right, joint_velocity_low, joint_acceleration_low);
+    moveJ(jointq_empty_boxes_right, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
-    moveJ(jointq_empty_boxes_left, joint_velocity_low, joint_acceleration_low);
+    moveJ(jointq_empty_boxes_left, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     moveJ(jointq_empty_boxes_over, joint_velocity_low, joint_acceleration_low);
     if(robotStopped)
       return;
     moveJ(jointq_pick_midpoint, joint_velocity_low, joint_acceleration_low);
-    if(robotStopped)
-      return;
-    moveJ(jointq_mir_midpoint, joint_velocity_high, joint_acceleration_high);
     if(robotStopped)
       return;
     moveJ(jointq_dropoff_box_feeder_over, joint_velocity_high, joint_acceleration_high);
