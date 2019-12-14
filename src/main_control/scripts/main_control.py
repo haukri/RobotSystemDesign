@@ -285,9 +285,12 @@ def publisher():
                 message = "70: Request position offsets from camera"
                 rospy.sleep(0.5)
                 mirOffsets = mirPositionOffset()
-                mirOffsets.x = mirOffsets.x / 1000.0
-                mirOffsets.y = mirOffsets.y / 1000.0
-                substate = 80
+                if mirOffsets.marker_found:
+                    mirOffsets.x = mirOffsets.x / 1000.0
+                    mirOffsets.y = mirOffsets.y / 1000.0
+                    substate = 80
+                else:
+                    substate = 50
             elif substate == 80:
                 message = "80: Move boxes from waiting zone to MiR"
                 currentRobotCmd = RobotCmd()
