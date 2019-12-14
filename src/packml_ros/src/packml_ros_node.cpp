@@ -17,6 +17,7 @@
  */
 
 #include <ros/ros.h>
+#include "std_msgs/Float64.h"
 #include "robot_msgs/RobotCommand.h"
 #include "robot_msgs/RobotCmd.h"
 #include "order_msgs/NewOrder.h"
@@ -25,6 +26,8 @@
 #include <packml_sm/boost/packml_state_machine_continuous.h>
 
 ros::Publisher robot_stop_pub;
+
+std::shared_ptr<packml_sm::PackmlStateMachineContinuous> sm;
 
 bool urRobotStateChange = false;
 
@@ -114,11 +117,11 @@ int mySuspendedMethod() {
   return 0;  // returning zero indicates non-failure
 }
 
-void stateChangeCallback(const std_msgs::String::ConstPtr& msg)
+void orderCallback(const std_msgs::Float64::ConstPtr& msg)
 {
-  if(msg->data == "ur_robot") {
-    urRobotStateChange = true;
-  }
+  ROS_INFO_STREAM("Ideal cycle time");
+  std::cout << "Ideal cycle time: " << msg->data << std::endl;
+  sm->setIdealCycleTime(msg->data);
 }
 
 int main(int argc, char* argv[])
@@ -126,9 +129,9 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "packml_node");
   ros::NodeHandle n;
 
-  ros::Subscriber sub = n.subscribe("packml_state_change", 10, stateChangeCallback);
+  ros::Subscriber sub = n.subscribe("set_cycle_time_seconds", 10, orderCallback);
 
-  auto sm = packml_sm::PackmlStateMachineContinuous::spawn();
+  sm = packml_sm::PackmlStateMachineContinuous::spawn();
   sm->setExecute(std::bind(myExecuteMethod));
   sm->setStarting(std::bind(myStartingMethod));
   // sm->setAborting(std::bind(stoppingAbortingSuspendingHoldingMethod));

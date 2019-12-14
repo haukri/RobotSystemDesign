@@ -68,6 +68,10 @@ $(document).ready(function () {
         }
     });
 
+    socket.on('orders_per_hour', function (ordersPerHour) {
+        
+    });
+
     /*socket.on('packml_stats', function(msg){
         document.getElementById( "availability").innerHTML = msg.stats.availability
     });*/

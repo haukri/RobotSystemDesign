@@ -28,7 +28,9 @@ var io = require('socket.io')(http);
 const GetStats = rosnodejs.require('packml_msgs').srv.GetStats;
 const Transition = rosnodejs.require('packml_msgs').srv.Transition;
 
-var feederPub;
+var feederPub, setCycleTimePub;
+
+var ordersPerHour = 40;
 
 var packMLStatus = {}
 var orderStatus;
@@ -53,6 +55,7 @@ function userInterface() {
           io.sockets.emit('main_control_status', mainControlStatus);
         }
         io.sockets.emit('feeder_empty', feederEmpty);
+        io.sockets.emit('orders_per_hour', ordersPerHour);
 
         socket.on('packml_command', message => {
           const request = new Transition.Request();
@@ -95,6 +98,10 @@ function userInterface() {
           feederPub.publish({ data: "" });
         })
 
+        socket.on('set_orders_per_hour', message => {
+          setCycleTimePub.publish({ data: message.ordersPerHour });
+        })
+
       });
       const subStatus = rosNode.subscribe('/packml_node/packml/status', 'packml_msgs/Status', (msg) => {
         packMLStatus = msg;
@@ -117,6 +124,8 @@ function userInterface() {
       });
 
       feederPub = rosNode.advertise('/feeder_full', 'std_msgs/String');
+
+      setCycleTimePub = rosNode.advertise('/set_cycle_time_seconds', 'std_msgs/Float64');
 
       let serviceClient = rosNode.serviceClient('/packml_node/packml/get_stats', 'packml_msgs/GetStats', { persist: true });
       rosNode.waitForService(serviceClient.getService(), 2000)

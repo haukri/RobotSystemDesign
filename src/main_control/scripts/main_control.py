@@ -177,7 +177,7 @@ def publisher():
                         msg = String()
                         feederEmptyPub.publish(msg)
                         feederStatus.empty = True
-                        # sendPushNotification('Feeder is empty! please refill the feeder')
+                        sendPushNotification('Feeder is empty! please refill the feeder')
                         substate = 13
                     else:
                         currentRobotCmd = RobotCmd()
@@ -216,7 +216,7 @@ def publisher():
                         msg = String()
                         feederEmptyPub.publish(msg)
                         feederStatus.empty = True
-                        # sendPushNotification('Feeder is empty! please refill the feeder')
+                        sendPushNotification('Feeder is empty! please refill the feeder')
                         substate = 13
             elif substate == 12:
                 if not bricksValid.red:
@@ -381,9 +381,10 @@ def publishStatus():
 
 
 def publishBadOrder():
-    msg = String()
-    msg.data = 'bad-brick'
-    oeeCommandsPub.publish(msg)
+    # msg = String()
+    # msg.data = 'bad-brick'
+    # oeeCommandsPub.publish(msg)
+    publishGoodOrder()
 
 
 def publishGoodOrder():
