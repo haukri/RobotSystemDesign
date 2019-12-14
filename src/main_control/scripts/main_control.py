@@ -147,7 +147,7 @@ def publisher():
                 else:
                     callMir()
                     suspendMachine()
-                    substate[SUSPENDED] = 15
+                    substates[SUSPENDED] = 15
                     substate = 4
             elif substate == 1:
                 message = "0: New order"
