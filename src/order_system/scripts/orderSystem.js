@@ -31,6 +31,9 @@ var lastLogEvent = "";
 var ipAddress = "10.10.19.20";
 //var ipAddress = "127.0.0.1:5000";
 
+var selectedOrder;
+var smallestOrderAmount = 1000;
+
 async function orderSystem() {
 
   await storage.init();
@@ -124,6 +127,10 @@ async function completeOrder(orderID, callback) {
 
 }
 
+async function sleep(duration) {
+  return new Promise(resolve => setTimeout(resolve, duration));
+} 
+
 function getNewOrder(callback) {
   var options = {
     url: 'http://' + ipAddress +'/orders',
@@ -134,19 +141,33 @@ function getNewOrder(callback) {
     //}
   };
   
-  request(options, function(err, res, body) {
+  request(options, async function(err, res, body) {
     let json = JSON.parse(body);     
     if(json.orders && json.orders.length > 0) {
-      let readyOrders = json.orders.filter((order) => {
+      var readyOrders = json.orders.filter((order) => {
         return order.status === 'ready';
       })
-      if(readyOrders.length > 0) {
-        var selectedOrder = readyOrders[Math.floor(Math.random()*readyOrders.length)];
-        requestOrder(selectedOrder, callback);
-      }
-      else {
-        console.log('ERROR: No orders with status ready');
-        setTimeout(getNewOrder(callback), 500);
+      while(readyOrders.length > 0) {
+        readyOrders.forEach(orderInfo => {
+          if((orderInfo.blue + orderInfo.yellow + orderInfo.red) < smallestOrderAmount) {
+            smallestOrderAmount = orderInfo.blue + orderInfo.yellow + orderInfo.red;
+            selectedOrder = orderInfo;
+          }
+        });
+        // var selectedOrder = readyOrders[Math.floor(Math.random()*readyOrders.length)];
+        if(await requestOrder(selectedOrder)) {
+          callback(selectedOrder);
+          break;
+        }
+        else {
+          readyOrders = readyOrders.filter((order) => {
+            return order.id != selectedOrder.id;
+          })
+          smallestOrderAmount = 1000;
+          console.log(readyOrders.length);
+          console.log("Try to get a new order");
+          await sleep(200);
+        }
       }
     }
     else {
@@ -156,28 +177,30 @@ function getNewOrder(callback) {
   });
 }
 
-function requestOrder(order, callback)  {
-  let options = {
-    url: 'http://' + ipAddress + '/orders/' + String(order.id),
-    method: 'PUT',
-  };
-  request(options, async function(err, res, body) {
-    let json = JSON.parse(body);
-    if(json.ticket) {
-      var storedOrder = {};
-      storedOrder.id = order.id;
-      storedOrder.blue = order.blue;
-      storedOrder.red = order.red;
-      storedOrder.yellow = order.yellow;
-      storedOrder.ticket = json.ticket;
-      storedOrder.maxDeleteAttempts = 10;
-      await storage.setItem(String(order.id), storedOrder);
-      callback(storedOrder);
-    }
-    else {
-      console.log('ERROR: The requested order is already taken');
-      setTimeout(getNewOrder(callback), 500);
-    }
+async function requestOrder(order)  {
+  return new Promise((resolve, reject) => {
+    let options = {
+      url: 'http://' + ipAddress + '/orders/' + String(order.id),
+      method: 'PUT',
+    };
+    request(options, async function(err, res, body) {
+      let json = JSON.parse(body);
+      if(json.ticket) {
+        var storedOrder = {};
+        storedOrder.id = order.id;
+        storedOrder.blue = order.blue;
+        storedOrder.red = order.red;
+        storedOrder.yellow = order.yellow;
+        storedOrder.ticket = json.ticket;
+        storedOrder.maxDeleteAttempts = 10;
+        await storage.setItem(String(order.id), storedOrder);
+        resolve(true);
+      }
+      else {
+        console.log('ERROR: The requested order is already taken');
+        resolve(false);
+      }
+    })
   })
 }
 

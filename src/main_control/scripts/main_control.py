@@ -80,7 +80,6 @@ UNHOLDING = 104
 COMPLETING = 105
 COMPLETE = 106
 
-# TODO robot begins order from the start after supsended for feeder empty
 
 def packml_callback(data):
     global stateChangeQueue, lastState
@@ -332,6 +331,16 @@ def publisher():
                     unsuspendMachine()
             elif substate == 10:
                 message = "10: Waiting for transition to state execute"
+
+        elif packmlState == ABORTED:
+            message = "0: System is aborted waiting for clearing command"
+            substates[EXECUTE] = 0
+            binNumber = 1
+        
+        elif packmlState == STOPPED:
+            message = "0: System is stopped waiting for clearing command"
+            substates[EXECUTE] = 0
+            binNumber = 1
 
         publishStatus()
         r.sleep()

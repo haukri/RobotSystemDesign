@@ -23,11 +23,15 @@
 #define UNSUSPENDING 102
 #define UNHOLDING 104
 #define HELD 11
+#define EXECUTE 6
+#define STOPPED 2
 
 #define START 2
 #define STOP 3
 #define RESET 6
 #define ABORT 5
+#define HOLD 4
+#define UNHOLD 102
 
 using namespace ur_rtde;
 using namespace std;
@@ -723,25 +727,42 @@ int main(int argc, char **argv)
       transitionClient.call(srv);
     }
     else if (packMLState != SUSPENDED && packMLState != HELD) {
-      if(safetymode == "Safetymode: SAFEGUARD_STOP") {
+      if(safetymode == "Safetymode: SAFEGUARD_STOP" && lastSafetyMode != "Safetymode: SAFEGUARD_STOP") {
         if(safetymode != lastSafetyMode) {
-          packml_msgs::Transition srv;
-          srv.request.command = STOP;
-          transitionClient.call(srv);
+          if(packMLState == EXECUTE) {
+            packml_msgs::Transition srv;
+            srv.request.command = HOLD;
+            transitionClient.call(srv);
+          }
+          else {
+            packml_msgs::Transition srv;
+            srv.request.command = STOP;
+            transitionClient.call(srv);
+          }
+
         }
         blue_blink = !blue_blink;
       }
       else {
-        if(lastSafetyMode == "Safetymode: SAFEGUARD_STOP") {
-          packml_msgs::Transition srv;
-          srv.request.command = RESET;
-          transitionClient.call(srv);
-          ros::Duration(0.5).sleep();
-          srv.request.command = START;
-          transitionClient.call(srv);
+        if(lastSafetyMode == "Safetymode: SAFEGUARD_STOP" && safetymode != "Safetymode: SAFEGUARD_STOP") {
+          if(packMLState == STOPPED){
+            packml_msgs::Transition srv;
+            srv.request.command = RESET;
+            transitionClient.call(srv);
+            ros::Duration(0.5).sleep();
+            srv.request.command = START;
+            transitionClient.call(srv);
+          }
+
         }
         blue_blink = false;
       }
+    }
+    else if(packMLState == HELD && lastSafetyMode == "Safetymode: SAFEGUARD_STOP" && safetymode != "Safetymode: SAFEGUARD_STOP") {
+      rtde_control->reuploadScript();
+      packml_msgs::Transition srv;
+      srv.request.command = UNHOLD;
+      transitionClient.call(srv);
     }
     else {
       if(safetymode == "Safetymode: SAFEGUARD_STOP") {

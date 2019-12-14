@@ -38,6 +38,7 @@ async function mirRobot() {
 
       const callMIRSub = rosNode.subscribe('/call_mir', 'std_msgs/String', async (msg) => {
         await setRegister(13, 0);
+        await setRegister(12, 0);
         postMission(() => {
           console.log("MIR arrived!");
           mirStatusPub.publish({data: ''});
