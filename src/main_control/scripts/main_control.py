@@ -146,6 +146,8 @@ def publisher():
                     substate = 5
                 else:
                     callMir()
+                    suspendMachine()
+                    substate[SUSPENDED] = 15
                     substate = 4
             elif substate == 1:
                 message = "0: New order"
@@ -158,11 +160,11 @@ def publisher():
                     # callMir()
             elif substate == 4:
                 message = "4: Wait for MiR to start mission"
-                msg = mirMissionStarted()
-                if msg.success:
-                    substate = 1
-                else:
-                    rospy.sleep(1)
+                # msg = mirMissionStarted()
+                # if msg.success:
+                #     substate = 1
+                # else:
+                #     rospy.sleep(1)
             elif substate == 5:
                 message = "5: Wait for MiR to finish charging"
                 msg = mirChargingDone()
@@ -334,6 +336,15 @@ def publisher():
                     unsuspendMachine()
             elif substate == 10:
                 message = "10: Waiting for transition to state execute"
+            elif substate == 15:
+                message = "15: Wait for MiR to start mission"
+                msg = mirMissionStarted()
+                if msg.success:
+                    substates[EXECUTE] = 1
+                    substates[SUSPENDED] = 0
+                    unsuspendMachine()
+                else:
+                    rospy.sleep(1)
 
         elif packmlState == ABORTED:
             message = "0: System is aborted waiting for clearing command"
