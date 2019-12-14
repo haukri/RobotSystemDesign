@@ -67,6 +67,9 @@ $(document).ready(function () {
                 }
             }).modal('show');
         }
+        else {
+            $('.ui.modal').modal('hide');
+        }
     });
 
     socket.on('orders_per_hour', function (ordersPerHour) {

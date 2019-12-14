@@ -96,6 +96,7 @@ function userInterface() {
         socket.on('feeder_full', message => {
           feederEmpty = false;
           feederPub.publish({ data: "" });
+          io.sockets.emit('feeder_empty', feederEmpty);
         })
 
         socket.on('increase_order_per_hour', message => {
