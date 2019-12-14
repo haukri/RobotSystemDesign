@@ -58,6 +58,10 @@
                     <a id="main-control-state" class="ui huge orange label"></a>
                 </div>
                 <div class="column">
+                    <div class="ui horizontal divider">
+                        Total Uptime
+                    </div>
+                    <h1 id="uptime" style="text-align: center;"></h1>
                     <h1>Statistics</h1>
                     <div class="ui indicating progress" id="oee-progress">
                         <div class="bar">
@@ -83,6 +87,7 @@
                         </div>
                         <div class="label">Availability</div>
                     </div>
+
                 </div>
                 <div class="column">
                     <h1>Current Order</h1>
@@ -114,29 +119,34 @@
 
         <!--            <div class="ui setting tab" data-tab="settings">-->
         <div id="settings" class="tabcontent">
-            <!--                <div class="testing">-->
-            <h1>Orders per hour: 22</h1>
-            <!--                <p>total time spend available: <div id="availability2"></div></p>-->
-            <!--                </div>-->
-            <div class="ui large buttons">
-                    <button class="ui button">-</button>
-                    <button class="ui button">+</button>
-                  </div>
+                <div class="ui stackable three column grid">
+                        <div class="column">
+                                <a class="ui massive teal label brick-count-label"><i class="clipboard list icon"></i>Orders per hour</a>
+                                <a id="order-per-hour" class="ui massive gray label brick-count">0</a>
+                                <div class="two ui buttons" style="margin-top: 20px;">
+                                        <button class="ui huge red button" onclick="decreaseOrderPerHour()">-</button>
+                                        <button class="ui huge blue button" onclick="increaseOrderPerHour()">+</button>
+                                      </div>
+                        </div>
+                        <div class="column">
+
+                        </div>
+                        <div class="column">
+
+                        </div>
+                    </div>
         </div>
     </div>
 
     <div id="buttonmenu" class="ui grid">
-        <div class="four wide green column" onclick="packmlCommand('start')">
+        <div class="five wide green column" onclick="packmlCommand('start')">
             <h1 class="command-button">Start/Restart</h1>
         </div>
-        <div class="four wide orange column" onclick="packmlCommand('hold')">
+        <div class="six wide orange column" onclick="packmlCommand('hold')">
             <h1 class="command-button">Hold/Unhold</h1>
         </div>
-        <div class="four wide yellow column" onclick="packmlCommand('stop')">
+        <div class="five wide yellow column" onclick="packmlCommand('stop')">
             <h1 class="command-button">Stop/Clear</h1>
-        </div>
-        <div class="four wide red column" onclick="packmlCommand('abort')">
-            <h1 class="command-button">Abort</h1>
         </div>
     </div>
 

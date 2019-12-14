@@ -55,6 +55,7 @@ $(document).ready(function () {
         $('#oee-progress').progress({
             percent: msg.stats.overall_equipment_effectiveness * 100
         });
+        document.getElementById("uptime").innerHTML = Math.floor(msg.stats.duration.data.secs / 60.0 / 60) + " hours " + Math.floor(msg.stats.duration.data.secs / 60.0) % 60 + " minutes";
     });
 
     socket.on('feeder_empty', function (feederEmpty) {
@@ -69,7 +70,7 @@ $(document).ready(function () {
     });
 
     socket.on('orders_per_hour', function (ordersPerHour) {
-        
+        document.getElementById("order-per-hour").innerHTML = ordersPerHour;
     });
 
     /*socket.on('packml_stats', function(msg){
@@ -115,6 +116,14 @@ function resetpacmkdaigram() {
     $('#aborting').css('fill', "#00ff00")
     $('#clear').css('fill', "#00ff00")
     $('#stopping').css('fill', "#00ff00")
+}
+
+function increaseOrderPerHour() {
+    socket.emit('increase_order_per_hour', {  })
+}
+
+function decreaseOrderPerHour() {
+    socket.emit('decrease_order_per_hour', {  })
 }
 
 function setpackmldiagram(state) {

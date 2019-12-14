@@ -98,8 +98,16 @@ function userInterface() {
           feederPub.publish({ data: "" });
         })
 
-        socket.on('set_orders_per_hour', message => {
-          setCycleTimePub.publish({ data: message.ordersPerHour });
+        socket.on('increase_order_per_hour', message => {
+          ordersPerHour += 1;
+          setCycleTimePub.publish({ data: ordersPerHour });
+          io.sockets.emit('orders_per_hour', ordersPerHour);
+        })
+
+        socket.on('decrease_order_per_hour', message => {
+          ordersPerHour -= 1;
+          setCycleTimePub.publish({ data: ordersPerHour });
+          io.sockets.emit('orders_per_hour', ordersPerHour);
         })
 
       });
@@ -135,6 +143,7 @@ function userInterface() {
             setInterval(() => {
               serviceClient.call(request).then((resp) => {
                 io.sockets.emit('packml_stats', resp);
+                console.log("test")
               })
             }, 1000);
           }
